@@ -128,14 +128,16 @@ def generate_table(dataset, i, feat):
         raise ValueError
 
     if i > 0:
-        name = name + f' - Synth {"XABC"[i]}'
+        synth_char = "XABC"[i]
+        name = name + f' - Synth {synth_char}'
 
     if i > 0:
-        neq_results_type = f'pairs-features_{feat}_noresize_2048-LG-synth{i}'
-        eq_results_type =  f'pairs-features_{feat}_noresize_2048-LG-syntheq{i}'
+        neq_results_type = f'synth{synth_char}v3-pairs-features_{feat}_noresize_2048-LG-synth{i}'
+        eq_results_type =  f'synth{synth_char}v3-pairs-features_{feat}_noresize_2048-LG-syntheq{i}'
     else:
         neq_results_type = f'pairs-features_{feat}_noresize_2048-LG'
         eq_results_type = f'pairs-features_{feat}_noresize_2048-LG_eq'
+
     # results_type = 'graph-SIFT_triplet_correspondences'
 
     neq_results = []
@@ -163,11 +165,11 @@ def generate_table(dataset, i, feat):
     print(table_text(name, eq_rows, neq_rows, i))
 
 if __name__ == '__main__':
-    for features in ['superpoint', 'sift']:
-        generate_table('rotunda', 0, features)
-        generate_table('cathedral', 0, features)
+    # for features in ['superpoint', 'sift']:
+    #     generate_table('rotunda', 0, features)
+    #     generate_table('cathedral', 0, features)
 
-    for i in range(1, 4):
-        generate_table('pt', i, 'superpoint')
+    # for i in range(1, 4):
+    #     generate_table('pt', i, 'superpoint')
     for i in range(1, 4):
         generate_table('eth3d', i, 'superpoint')
