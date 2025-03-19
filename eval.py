@@ -32,7 +32,7 @@ def parse_args():
     return parser.parse_args()
 
 def get_pairs(file):
-    return [tuple(x.split('-')) for x in file.keys() if 'feat' not in x and 'desc' not in x]
+    return [tuple(x.split('-'))[:2] for x in file.keys() if 'feat' not in x and 'desc' not in x and 'uneq' not in x]
 
 
 def normalize(kp, width, height):
@@ -108,10 +108,10 @@ def eval_experiment(x):
     # mean_scale = 1.0
 
     if iters is None:
-        ransac_dict = {'max_iterations': 10000, 'max_epipolar_error': 3.0 / mean_scale, 'progressive_sampling': False,
+        ransac_dict = {'max_iterations': 10000, 'max_epipolar_error': 8.0 / mean_scale, 'progressive_sampling': False,
                        'min_iterations': 100, 'lo_iterations': 25}
     else:
-        ransac_dict = {'max_iterations': iters, 'max_epipolar_error': 3.0 / mean_scale, 'progressive_sampling': False,
+        ransac_dict = {'max_iterations': iters, 'max_epipolar_error': 8.0 / mean_scale, 'progressive_sampling': False,
                        'min_iterations': iters}
 
     if solver == 'Feq':
@@ -315,6 +315,12 @@ def draw_cumplots(experiments, results, eq_only=False):
 
 
 def eval(args):
+    if args.synth:
+        chars = ['', 'A', 'B', 'C']
+        synth_string = f'synth{chars[args.synth]}'
+        assert synth_string in args.feature_file
+        S_file = h5py.File(os.path.join(args.dataset_path, f'{synth_string}-distortion.h5'))
+
     if args.eq:
         if args.synth != 2:
             experiments = ['Feq_7pt', 'Feq_7pt_s3',
@@ -332,7 +338,7 @@ def eval(args):
             experiments = ['k2k1_9pt', 'k2Fk1_10pt',
                            'F_7pt', 'F_7pt_s3', 'Fns_7pt']
         else:
-            experiments = ['k2k1_9pt', 'k2Fk1_10pt',
+            experiments = ['k2Fk1_9pt', 'k2Fk1_10pt',
                            'F_7pt', 'Fns_7pt']
 
         # experiments = ['fok2Fk1_7pt']
@@ -393,8 +399,13 @@ def eval(args):
                 R_gt = np.dot(R2, R1.T)
                 t_gt = t2 - np.dot(R_gt, t1)
 
-
-                matches = np.array(C_file[f'{img_name_1}-{img_name_2}'])
+                if args.synth:
+                    if args.eq:
+                        matches = np.array(C_file[f'{img_name_1}-{img_name_2}-eq'])
+                    else:
+                        matches = np.array(C_file[f'{img_name_1}-{img_name_2}-uneq'])
+                else:
+                    matches = np.array(C_file[f'{img_name_1}-{img_name_2}'])
 
                 kp1 = matches[:, :2]
                 kp2 = matches[:, 2:4]
@@ -414,36 +425,16 @@ def eval(args):
                 if len(kp1) < 10:
                     continue
 
-                kp1_normalized, T1 = normalize(kp1, w_dict[img_name_1], h_dict[img_name_1])
-                kp2_normalized, T2 = normalize(kp2, w_dict[img_name_2], h_dict[img_name_2])
+                kp1_distorted, T1 = normalize(kp1, w_dict[img_name_1], h_dict[img_name_1])
+                kp2_distorted, T2 = normalize(kp2, w_dict[img_name_2], h_dict[img_name_2])
 
                 if args.synth:
-                    if args.synth == 1:
-                        k1 = dist()[0]
-                        if args.eq:
-                            k2 = k1
-                        else:
-                            k2 = dist()[0]
-                    elif args.synth == 2:
-                        k1 = - 0.3 * np.random.rand()
-                        if args.eq:
-                            k2 = k1
-                        else:
-                            k2 = - 0.3 * np.random.rand()
-                    elif args.synth == 3:
-                        k1 = - 0.5 - 1.2 * np.random.rand()
-                        if args.eq:
-                            k2 = k1
-                        else:
-                            k2 = - 0.5 - 1.2 * np.random.rand()
+                    k1 = S_file[f'{img_name_1}-{img_name_2}-k1'][()]
+                    if args.eq:
+                        k2 = k1
                     else:
-                        raise NotImplementedError
-
-                    kp1_distorted = distort(kp1_normalized, k1)
-                    kp2_distorted = distort(kp2_normalized, k2)
+                        k2 = S_file[f'{img_name_1}-{img_name_2}-k2'][()]
                 else:
-                    kp1_distorted = kp1_normalized
-                    kp2_distorted = kp2_normalized
                     k1 = k_dict[img_name_1]
                     k2 = k_dict[img_name_2]
 
