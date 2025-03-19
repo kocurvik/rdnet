@@ -108,10 +108,10 @@ def eval_experiment(x):
     # mean_scale = 1.0
 
     if iters is None:
-        ransac_dict = {'max_iterations': 10000, 'max_epipolar_error': 8.0 / mean_scale, 'progressive_sampling': False,
+        ransac_dict = {'max_iterations': 10000, 'max_epipolar_error': 3.0 / mean_scale, 'progressive_sampling': False,
                        'min_iterations': 100, 'lo_iterations': 25}
     else:
-        ransac_dict = {'max_iterations': iters, 'max_epipolar_error': 8.0 / mean_scale, 'progressive_sampling': False,
+        ransac_dict = {'max_iterations': iters, 'max_epipolar_error': 3.0 / mean_scale, 'progressive_sampling': False,
                        'min_iterations': iters}
 
     if solver == 'Feq':
