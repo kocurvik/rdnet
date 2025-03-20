@@ -319,7 +319,7 @@ def eval(args):
         chars = ['', 'A', 'B', 'C']
         synth_string = f'synth{chars[args.synth]}'
         assert synth_string in args.feature_file
-        S_file = h5py.File(os.path.join(args.dataset_path, f'{synth_string}-distortion.h5'))
+        S_file = h5py.File(os.path.join(args.dataset_path, f'{synth_string}v3-distortion.h5'))
 
     if args.eq:
         if args.synth != 2:
