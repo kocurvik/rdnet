@@ -169,6 +169,7 @@ def print_results(experiments, results, eq_only=False):
         inliers = np.array([x['info']['inlier_ratio'] for x in exp_results])
 
         lo = 'kFk' if 'kFk' in exp or 'eq' in exp else 'k2Fk1'
+        lo = exp.split('_')[0] if '_ns' in exp else lo
         exp_name = exp.replace('_', ' ').replace('eq','')
 
 
