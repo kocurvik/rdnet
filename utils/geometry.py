@@ -169,3 +169,24 @@ def pose_from_F(F, K1, K2, kp1, kp2):
         return np.eye(3), np.ones(3)
 
     return R, t
+
+
+def normalize(kp, width, height):
+    new_kp = np.copy(kp)
+
+    scale = max(width, height)
+    new_kp -= np.array([[width / 2, height / 2]])
+    new_kp /= scale
+
+    T = np.array([[scale, 0.0, width / 2], [0.0, scale, height / 2], [0, 0, 1]])
+
+    return new_kp, T
+
+
+def k_err(k_gt, k_est):
+    # return abs((1 / (1 + k_gt)) - (1 /(1 + k_est))) / abs(( 1 / (1 + k_gt)))
+    return np.abs(k_gt - k_est)
+
+def f_err(f_gt, f_est):
+    # return abs((1 / (1 + k_gt)) - (1 /(1 + k_est))) / abs(( 1 / (1 + k_gt)))
+    return np.abs(f_gt - f_est) / f_gt

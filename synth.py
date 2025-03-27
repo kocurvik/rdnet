@@ -87,17 +87,18 @@ def plot_scene(points, R, t, f, width=640, height=480, color_1='black', color_2=
     plt.title(name)
 
 
-def get_scene(f, k1, k2, R, t, num_pts, X=None, min_distance=1, depth=1, width=1, height=1, sigma_p=0.0, plot=None, seed=None):
+def get_scene(f1, f2, k1, k2, R, t, num_pts, X=None, min_distance=1, depth=1, width=1, height=1, sigma_p=0.0, plot=None, seed=None):
     if seed is not None:
         np.random.seed(seed)
-    K = np.diag([f, f, 1])
+    K1 = np.diag([f1, f1, 1])
+    K2 = np.diag([f2, f2, 1])
 
 
-    P1 = K @ np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]])
-    P2 = K @ np.column_stack([R, t])
+    P1 = K1 @ np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]])
+    P2 = K2 @ np.column_stack([R, t])
 
     if X is None:
-        X = generate_points(3 * num_pts, f, min_distance, depth, width=width, height=height)
+        X = generate_points(3 * num_pts, f1, min_distance, depth, width=width, height=height)
     x1_u = get_projection(P1, X)
     x2_u = get_projection(P2, X)
 
@@ -125,36 +126,35 @@ def get_scene(f, k1, k2, R, t, num_pts, X=None, min_distance=1, depth=1, width=1
 
 
 def run_synth():
-    f = 1.0
-    gt_K = np.diag([f, f, 1.0])
+    f1 = 1.5
+    f2 = 1.2
+    gt_K1 = np.diag([f1, f1, 1.0])
+    gt_K2 = np.diag([f2, f2, 1.0])
     k1 = -0.5
-    k2 = -0.5
-    rd_vals = [1e-7, 1e-8, 1e-9, 0.0]
+    k2 = -0.4
+    # rd_vals = [0, -0.8]
     rd_vals = []
 
     R = Rotation.from_euler('xyz', (5, 60, 0), degrees=True).as_matrix()
-    c = np.array([2 * f, 0, f])
-    # R = Rotation.from_euler('xyz', (theta, 30, 0), degrees=True).as_matrix()
-    # c = np.array([f1, y, 0])
+    c = np.array([2 * f1, 0, f1])
     t = -R @ c
 
-    x1, x2, X = get_scene(f, k1, k2, R, t, 100)
+    x1, x2, X = get_scene(f1, f2, k1, k2, R, t, 100)
 
     sigmas = [0.0, 0.1, 0.2, 0.3, 0.5, 1.0, 1.5]
     # sigmas = [0.5, 1.0, 1.5]
     # sigmas = [0.0]
 
     rot_errs = {sigma: [] for sigma in sigmas}
+    focal_errs = {sigma: [] for sigma in sigmas}
     k1s = {sigma: [] for sigma in sigmas}
     k2s = {sigma: [] for sigma in sigmas}
     inliers = {sigma: [] for sigma in sigmas}
-    use_undistorted = False
-    use_9pt = True
 
 
     for sigma in sigmas:
         for _ in tqdm(range(10)):
-            x1, x2, X = get_scene(f, k1, k2, R, t, 100, width=1, height=1)
+            x1, x2, X = get_scene(f1, f2, k1, k2, R, t, 100, width=1, height=1)
 
             xx1 = x1 + sigma * np.random.randn(*(x1.shape)) / 1000
             xx2 = x2 + sigma * np.random.randn(*(x1.shape)) / 1000
@@ -170,52 +170,41 @@ def run_synth():
             if np.isnan(xx2).any():
                 print("xx2 NaN")
 
-            camera_dict =  {'model': 'SIMPLE_PINHOLE', 'width': 640, 'height': 480, 'params': [f, 0, 0]}
-            ransac_dict = {'max_iterations': 1000, 'max_epipolar_error': 2.0/1000, 'progressive_sampling': False, 'min_iterations': 1000}
+            ransac_dict = {'max_iterations': 1000, 'progressive_sampling': False, 'min_iterations': 1000, 'lo_iterations': 25}
+            bundle_dict = {'refine_pose': True, 'refine_focal_length': True, 'refine_principal_point': False,
+                           'refine_extra_params': True, 'max_iterations': 100}
+            opt_dict = {'max_error': 3.0 / 1000, 'ransac': ransac_dict, 'bundle': bundle_dict, 'shared_intrinsics': False}
 
-            # image_pair, out = poselib.estimate_rd_shared_focal_relative_pose(xx1, xx2,np.array([0.0, 0.0]), rd_vals, ransac_dict, {'verbose': False})
-            # image_pair, out = poselib.estimate_rd_shared_focal_relative_pose(xx1, xx2,np.array([0.0, 0.0]), [], ransac_dict, {'verbose': False})
-            # rot_errs[sigma].append(rotation_angle(image_pair.pose.R.T @ R))
-            # k1s[sigma].append(image_pair.camera1.params[-1])
-            # k2s[sigma].append(image_pair.camera1.params[-1])
-            # inliers[sigma].append(out['num_inliers'])
+            image_pair, out = poselib.estimate_focal_rd_relpose(xx1, xx2, rd_vals, opt_dict)
 
-            # F_cam, out = poselib.estimate_kFk(xx1, xx2, rd_vals, use_undistorted, use_9pt, ransac_dict,
-            #                                          {'verbose': False, 'max_iterations': 100})
-            # F_cam, out = poselib.estimate_kFk_final_only(xx1, xx2, use_undistorted, ransac_dict,
-            #                                          {'verbose': False, 'max_iterations': 100})
-            #
-            # F = F_cam.F
-            # kk1 = F_cam.camera.params[-1]
-            # kk2 = kk1
-            # print(out['inlier_ratio'])
+            print(image_pair.camera1.params)
+            print(image_pair.camera2.params)
 
-
-            # F_cam_pair, out = poselib.estimate_k2Fk1(xx1, xx2, rd_vals, use_undistorted, use_9pt, ransac_dict, {'verbose': False, 'max_iterations':1000})
-            F_cam_pair, out = poselib.estimate_k2Fk1_final_only(xx1, xx2, use_undistorted, ransac_dict, {'verbose': False, 'max_iterations':1000})
-
-            F = F_cam_pair.F
-            kk1 = F_cam_pair.camera1.params[3]
-            kk2 = F_cam_pair.camera2.params[3]
+            kk1 = image_pair.camera1.params[-1]
+            kk2 = image_pair.camera2.params[-1]
 
             # F = poselib.estimate_fundamental(xx1, xx2,)
 
-            E_est = gt_K.T @ F @ gt_K
-            R1, R2, _ = cv2.decomposeEssentialMat(E_est)
-
-            rot_err = min(rotation_angle(R1.T @ R), rotation_angle(R2.T @ R))
+            rot_err = rotation_angle(image_pair.pose.R.T @ R)
+            focal_err = np.abs(image_pair.camera1.focal() - f1) / f1
 
             rot_errs[sigma].append(rot_err)
+            focal_errs[sigma].append(focal_err)
             k1s[sigma].append(kk1)
             k2s[sigma].append(kk2)
             inliers[sigma].append(out['num_inliers'])
 
     rot_errs = [np.array(rot_errs[sigma]) for sigma in sigmas]
+    focal_errs = [np.array(focal_errs[sigma]) for sigma in sigmas]
     inliers = [np.array(inliers[sigma]) for sigma in sigmas]
     k1s = [np.array(k1s[sigma]) for sigma in sigmas]
     k2s = [np.array(k2s[sigma]) for sigma in sigmas]
     plt.title("R")
     plt.boxplot(rot_errs)
+    plt.show()
+
+    plt.title("f err")
+    plt.boxplot(focal_errs)
     plt.show()
 
     plt.title("k1s")

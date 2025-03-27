@@ -397,7 +397,8 @@ def read_bundler(bundler_path, rc_path, img_path, img_list_path=None):
     for element in root[idx]:
         p = ntpath.normpath(element.attrib['fileName'])
 
-        if p.split('\\')[-2] == ntpath.basename(img_path):
+
+        if len(p.split('\\')) == 1 or p.split('\\')[-2] == ntpath.basename(img_path):
             filename = ntpath.basename(p)
         else:
             filename = ntpath.join(p.split('\\')[-2], p.split('\\')[-1])
@@ -414,12 +415,13 @@ def read_bundler(bundler_path, rc_path, img_path, img_list_path=None):
         # we are assuming all images were used for the given component
         img_list = rc_filenames
     else:
-        with open(img_list_path, 'r', encoding='utf-16-le') as f:
+        # with open(img_list_path, 'r', encoding='utf-16-le') as f:
+        with open(img_list_path, 'r', encoding='utf-8') as f:
             l = f.readlines()
         img_list = []
         for line in l:
             p = ntpath.normpath(line.strip())
-            if p.split('\\')[-2] == ntpath.basename(img_path):
+            if 'Parliament' in p or p.split('\\')[-2] == ntpath.basename(img_path):
                 img_list.append(ntpath.basename(line).strip())
             else:
                 img_list.append(ntpath.join(p.split('\\')[-2], p.split('\\')[-1]))
@@ -487,6 +489,11 @@ def get_paths(dataset_path):
         rc_path = os.path.join(dataset_path, 'rc.rcproj')
         img_path = os.path.join(dataset_path, 'images')
         img_list_path = os.path.join(dataset_path, 'images_component_2.imagelist')
+    elif basename == 'Parliament':
+        bundler_path = os.path.join(dataset_path, 'Parliament_160_17f.out')
+        rc_path = os.path.join(dataset_path, 'Parliament_160_17f.rcproj')
+        img_path = os.path.join(dataset_path, 'Images')
+        img_list_path = os.path.join(dataset_path, 'Parliament_160_17f.lst')
     else:
         raise NotImplementedError
 

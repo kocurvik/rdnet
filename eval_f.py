@@ -11,8 +11,8 @@ from matplotlib import pyplot as plt
 from prettytable import PrettyTable
 from tqdm import tqdm
 
-from utils.geometry import rotation_angle, angle, normalize, k_err
-from utils.geometry import get_camera_dicts, undistort, pose_from_F
+from utils.geometry import rotation_angle, angle, k_err, f_err, normalize
+from utils.geometry import get_camera_dicts, undistort, distort, pose_from_F
 from utils.rand import get_random_rd_distribution
 from utils.vis import draw_results_pose_auc_10
 
@@ -35,27 +35,26 @@ def get_pairs(file):
     return [tuple(x.split('-'))[:2] for x in file.keys() if 'feat' not in x and 'desc' not in x and 'uneq' not in x]
 
 
-def get_result_dict(info, kp1_distorted, kp2_distorted, F_est, k1_est, k2_est, k1_gt, k2_gt, R_gt, t_gt, K1, K2, T1, T2):
-    kp1_undistorted = undistort(kp1_distorted[info['inliers']], k1_est)
-    kp2_undistorted = undistort(kp2_distorted[info['inliers']], k2_est)
-
-    kp1_undistorted *= T1[0, 0]
-    kp2_undistorted *= T2[0, 0]
-
-    pp1 = T1[:2, 2]
-    pp2 = T2[:2, 2]
-
-    kp1_undistorted += pp1[np.newaxis]
-    kp2_undistorted += pp2[np.newaxis]
-
-    F_est = np.linalg.inv(T2).T @ F_est @ np.linalg.inv(T1)
-
+def get_result_dict(info, image_pair, k1_gt, k2_gt, R_gt, t_gt, K1, K2, T1, T2):
     out = {}
 
-    R_est, t_est = pose_from_F(F_est, K1, K2, kp1_undistorted, kp2_undistorted)
+    mean_scale = (T1[0, 0] + T2[0, 0]) / 2
+
+    f1_gt = (K1[0, 0] + K1[1, 1]) / (2 * mean_scale)
+    f2_gt = (K2[0, 0] + K2[1, 1]) / (2 * mean_scale)
+
 
     out['K1_gt'] = K1.tolist()
     out['K2_gt'] = K2.tolist()
+    
+    R_est = image_pair.pose.R
+    t_est = image_pair.pose.t
+    
+    k1_est = image_pair.camera1.params[-1]
+    k2_est = image_pair.camera2.params[-1]
+    
+    f1_est = image_pair.camera1.params[0]
+    f2_est = image_pair.camera2.params[0]
 
     out['R_err'] = rotation_angle(R_est.T @ R_gt)
     out['t_err'] = angle(t_est, t_gt)
@@ -72,6 +71,14 @@ def get_result_dict(info, kp1_distorted, kp2_distorted, F_est, k1_est, k2_est, k
     out['k2_err'] = k_err(k2_gt, k2_est)
     out['k2'] = k2_est
     out['k2_gt'] = k2_gt
+    
+    out['f1_err'] = f_err(f1_gt, f1_est)
+    out['f1'] = f1_est
+    out['f1_gt'] = f1_gt
+
+    out['f2_err'] = f_err(f2_gt, f2_est)
+    out['f2'] = f2_est
+    out['f2_gt'] = f2_gt
 
     info['inliers'] = []
     out['info'] = info
@@ -84,22 +91,25 @@ def eval_experiment(x):
     iters, experiment, kp1_distorted, kp2_distorted, k1, k2, R_gt, t_gt, T1, T2, K1, K2, sarg = x
 
     solver = experiment.split('_')[0]
-
-    use_undistorted = False
-
     mean_scale = (T1[0, 0] + T2[0,0]) / 2
-    # mean_scale = 1.0
-
+    
     if iters is None:
         ransac_dict = {'max_iterations': 10000, 'max_epipolar_error': 3.0 / mean_scale, 'progressive_sampling': False,
                        'min_iterations': 100, 'lo_iterations': 25}
     else:
         ransac_dict = {'max_iterations': iters, 'max_epipolar_error': 3.0 / mean_scale, 'progressive_sampling': False,
                        'min_iterations': iters}
+    
+    shared_intrinsics = 'kFk' in experiment or 'Efeq' in experiment
+    use_minimal = 'k2k1_9pt' in experiment or 'kFk_8pt' in experiment
 
-    ransac_dict['pseudo_tsamp'] = -1.2 if 'ps0.6' in experiment else 1.0
+    bundle_dict = {'refine_pose': True, 'refine_focal_length': True, 'refine_principal_point': False,
+                   'refine_extra_params': '_ns' not in experiment, 'max_iterations': 100}
+    
+    opt_dict = {'max_error': 3.0 / 1000, 'ransac': ransac_dict, 'bundle': bundle_dict,
+                'shared_intrinsics': shared_intrinsics, 'use_minimal': use_minimal}
 
-    if solver == 'Feq':
+    if 'Efeq' in experiment or 'F_7pt' in experiment:
         rd_vals = [0.0]
         if sarg == 3:
             rd_vals = [-0.9]
@@ -108,98 +118,25 @@ def eval_experiment(x):
                 rd_vals = [0.0, -0.6, -1.2]
             elif sarg == 3:
                 rd_vals = [-0.6, -0.9, -1.2]
-            else:
-                raise ValueError
+    else:
+        # Rd vals empty means we use nonminimal solvers
+        rd_vals = []
 
-        start = perf_counter()
-        F_cam, info = poselib.estimate_kFk(kp1_distorted, kp2_distorted, rd_vals, use_undistorted, False, ransac_dict,
-                                           {'verbose': False, 'max_iterations': 100})
-
-        # F, info = poselib.estimate_fundamental(kp1_distorted, kp2_distorted, ransac_dict, {})
-
-        info['runtime'] = 1000 * (perf_counter() - start)
-        F_est = F_cam.F
-        k1_est = F_cam.camera.params[-1]
-    # k1_est = 0.0
-        k2_est = k1_est
-    elif solver == 'F':
-        rd_vals = [0.0]
-        if sarg == 3:
-            rd_vals = [-0.9]
-        if 's3' in experiment:
-            if sarg < 2:
-                rd_vals = [0.0, -0.6, -1.2]
-            elif sarg == 3:
-                rd_vals = [-0.6, -0.9, -1.2]
-            else:
-                raise ValueError
-
-        start = perf_counter()
-        F_cam, info = poselib.estimate_k2Fk1(kp1_distorted, kp2_distorted, rd_vals, use_undistorted, False, ransac_dict,
-                                           {'verbose': False, 'max_iterations': 100})
-
-        # F, info = poselib.estimate_fundamental(kp1_distorted, kp2_distorted, ransac_dict, {})
-
-        info['runtime'] = 1000 * (perf_counter() - start)
-        F_est = F_cam.F
-        k1_est = F_cam.camera1.params[-1]
-        k2_est = F_cam.camera2.params[-1]
-    elif solver == 'Fns':
-        start = perf_counter()
-        F_est, info = poselib.estimate_fundamental(kp1_distorted, kp2_distorted, ransac_dict, {'verbose': False, 'max_iterations': 100})
-        info['runtime'] = 1000 * (perf_counter() - start)
-        k1_est = 0.0
-        k2_est = 0.0
-    elif solver == 'fokFk':
-        start = perf_counter()
-        F_cam, info = poselib.estimate_kFk_final_only(kp1_distorted, kp2_distorted, use_undistorted, ransac_dict,
-                                                      {'verbose': False, 'max_iterations': 100})
-        info['runtime'] = 1000 * (perf_counter() - start)
-        F_est = F_cam.F
-        k1_est = F_cam.camera.params[-1]
-        k2_est = k1_est
-    elif solver == 'kFk':
-        use_9pt = '9pt' in experiment
-        start = perf_counter()
-        F_cam, info = poselib.estimate_kFk(kp1_distorted, kp2_distorted, [], use_undistorted, use_9pt, ransac_dict,
-                                          {'verbose': False, 'max_iterations': 100})
-        info['runtime'] = 1000 * (perf_counter() - start)
-        F_est = F_cam.F
-        k1_est = F_cam.camera.params[-1]
-        k2_est = k1_est
-    elif solver == 'fok2Fk1':
-        start = perf_counter()
-        F_cam, info = poselib.estimate_k2Fk1_final_only(kp1_distorted, kp2_distorted, use_undistorted, ransac_dict,
-                                                        {'verbose': False, 'max_iterations': 100})
-        info['runtime'] = 1000 * (perf_counter() - start)
-        F_est = F_cam.F
-        k1_est = F_cam.camera1.params[-1]
-        k2_est = F_cam.camera2.params[-1]
-    else: # solver == 'k2Fk1'
-        use_10pt = '10pt' in experiment
-        start = perf_counter()
-        F_cam, info = poselib.estimate_k2Fk1(kp1_distorted, kp2_distorted, [], use_undistorted, use_10pt, ransac_dict,
-                                            {'verbose': False, 'max_iterations': 100})
-        info['runtime'] = 1000 * (perf_counter() - start)
-        F_est = F_cam.F
-        k1_est = F_cam.camera1.params[-1]
-        k2_est = F_cam.camera2.params[-1]
-
-    # if solver == 'kFk'
-
-    result_dict = get_result_dict(info, kp1_distorted, kp2_distorted,
-                                  F_est, k1_est, k2_est,
-                                  k1, k2, R_gt, t_gt, K1, K2, T1, T2)
+    start = perf_counter()
+    image_pair, info = poselib.estimate_focal_rd_relpose(kp1_distorted, kp2_distorted, rd_vals, opt_dict)
+    info['runtime'] = 1000 * (perf_counter() - start)
+    
+    result_dict = get_result_dict(info, image_pair, k1, k2, R_gt, t_gt, K1, K2, T1, T2)
     result_dict['experiment'] = experiment
 
     return result_dict
 
 
 def print_results(experiments, results, eq_only=False):
-    tab = PrettyTable(['solver', 'LO', 'median pose err', 'mean pose err',
-                       'Pose AUC@5', 'Pose AUC@10', 'Pose AUC@20',
-                       'median k err', 'mean k err',
-                       'k AUC@0.05', 'k AUC@0.1' ,
+    tab = PrettyTable(['solver', 'LO',
+                       'median pose err', 'Pose AUC@10',
+                       'median k err', 'k AUC@0.1',
+                       'median f err', 'f AUC@0.1',
                        'median time', 'mean time', 'median inliers', 'mean inliers'])
     tab.align["solver"] = "l"
     tab.float_format = '0.2'
@@ -219,10 +156,14 @@ def print_results(experiments, results, eq_only=False):
         k_errs = [k_err(r['k1_gt'], r['k1']) for r in exp_results]
         k_errs.extend([k_err(r['k2_gt'], r['k2']) for r in exp_results])
         k_errs = np.array(k_errs)
-
         k_errs[np.isnan(k_errs)] = 1.0
         k_res = np.array([np.sum(k_errs < t / 100) / len(k_errs) for t in range(1, 21)])
 
+        f_errs = [f_err(r['f1_gt'], r['f1']) for r in exp_results]
+        f_errs.extend([f_err(r['f2_gt'], r['f2']) for r in exp_results])
+        f_errs = np.array(f_errs)
+        f_errs[np.isnan(f_errs)] = 1.0
+        f_res = np.array([np.sum(f_errs < t / 100) / len(f_errs) for t in range(1, 21)])
 
         times = np.array([x['info']['runtime'] for x in exp_results])
         inliers = np.array([x['info']['inlier_ratio'] for x in exp_results])
@@ -231,10 +172,10 @@ def print_results(experiments, results, eq_only=False):
         exp_name = exp.replace('_', ' ').replace('eq','')
 
 
-        tab.add_row([exp_name, lo, np.median(p_errs), np.mean(p_errs),
-                     np.mean(p_res[:5]), np.mean(p_res[:10]), np.mean(p_res),
-                     np.median(k_errs), np.mean(k_errs),
-                     np.mean(k_res[:5]), np.mean(k_res[:10]),
+        tab.add_row([exp_name, lo,
+                     np.median(p_errs), np.mean(p_res[:10]),
+                     np.median(k_errs), np.mean(k_res[:10]),
+                     np.median(f_errs), np.mean(f_res[:10]),
                      np.median(times), np.mean(times),
                      np.median(inliers), np.mean(inliers)])
     print(tab)
@@ -242,61 +183,6 @@ def print_results(experiments, results, eq_only=False):
     print('latex')
 
     print(tab.get_formatted_string('latex'))
-
-def draw_cumplots(experiments, results, eq_only=False):
-    plt.figure()
-    plt.xlabel('Pose error')
-    plt.ylabel('Portion of samples')
-
-    # results = [r for r in results if r['k2_gt'] < -0.5 or r['k1_gt'] < -0.5]
-    # results = [r for r in results if r['k2_gt'] < -1.0]
-
-    for exp in experiments:
-        exp_results = [x for x in results if x['experiment'] == exp]
-
-        if eq_only:
-            exp_results = [x for x in exp_results if x['k1_gt'] == x['k2_gt']]# and x['K1_gt'] == x['K2_gt']]
-        else:
-            exp_results = [x for x in exp_results if x['k1_gt'] != x['k2_gt']]  # and x['K1_gt'] == x['K2_gt']]
-
-        # print(np.nanmedian([r['k2'] for r in exp_results]))
-        # print(len(exp_results))
-
-        lo = 'kFk' if 'kFk' in exp or 'eq' in exp else 'k2Fk1'
-        exp_name = exp.replace('_', ' ').replace('eq','')
-        label = f'{exp_name} + {lo} LO'
-
-        R_errs = np.array([max(r['R_err'], r['t_err']) for r in exp_results])
-        R_res = np.array([np.sum(R_errs < t) / len(R_errs) for t in range(1, 180)])
-        plt.plot(np.arange(1, 180), R_res, label = label)
-
-    plt.legend()
-    plt.show()
-
-    plt.figure()
-    plt.xlabel('k error')
-    plt.ylabel('Portion of samples')
-
-    for exp in experiments:
-        exp_results = [x for x in results if x['experiment'] == exp]
-
-        if eq_only:
-            exp_results = [x for x in exp_results if x['k1_gt'] == x['k2_gt']]# and x['K1_gt'] == x['K2_gt']]
-        else:
-            exp_results = [x for x in exp_results if x['k1_gt'] != x['k2_gt']]  # and x['K1_gt'] == x['K2_gt']]
-
-        lo = 'kFk' if 'kFk' in exp or 'eq' in exp else 'k2Fk1'
-        exp_name = exp.replace('_', ' ').replace('eq','')
-        label = f'{exp_name} + {lo} LO'
-
-        k_errs = [k_err(r['k1_gt'], r['k1']) for r in exp_results]
-        k_errs.extend([k_err(r['k2_gt'], r['k2']) for r in exp_results])
-        k_errs = np.array(k_errs)
-        k_res = np.array([np.sum(k_errs < t / 100) / len(k_errs) for t in range(1, 201)])
-        plt.plot(np.arange(1, 201) / 100, k_res, label = label)
-
-    plt.legend()
-    plt.show()
 
 
 def eval(args):
@@ -308,26 +194,21 @@ def eval(args):
 
     if args.eq:
         if args.synth != 2:
-            experiments = ['Feq_7pt', 'Feq_7pt_s3',
+            experiments = ['Efeq_6pt', 'Efeq_6pt_s3', 'Efeq_6pt_ns',
                            'kFk_8pt', 'kFk_9pt',
                            'k2k1_9pt', 'k2Fk1_10pt',
-                           'F_7pt', 'F_7pt_s3', 'Fns_7pt']
+                           'F_7pt', 'F_7pt_s3', 'F_7pt_ns']
         else:
-            experiments = ['Feq_7pt', 'Feq_7pt_ps0.6',
-                           'kFk_8pt', 'kFk_9pt',
+            experiments = ['Efeq_6pt', 'Efeq_6pt_ns', 'kFk_8pt', 'kFk_9pt',
                            'k2k1_9pt', 'k2Fk1_10pt',
-                           'F_7pt', 'F_7pt_ps0.6', 'Fns_7pt']
-        # experiments = ['fokFk_7pt', 'fok2Fk1_7pt']
+                           'F_7pt', 'F_7pt_ns']
     else:
         if args.synth != 2:
             experiments = ['k2k1_9pt', 'k2Fk1_10pt',
-                           'F_7pt', 'F_7pt_ps0.6', 'F_7pt_s3', 'Fns_7pt']
-            experiments = ['F_7pt', 'F_7pt_ps0.6']
+                           'F_7pt', 'F_7pt_s3', 'F_7pt_ns']
         else:
             experiments = ['k2k1_9pt', 'k2Fk1_10pt',
-                           'F_7pt', 'Fns_7pt']
-
-        # experiments = ['fok2Fk1_7pt']
+                           'F_7pt', 'F_7pt_ns']
 
     dataset_path = args.dataset_path
     basename = os.path.basename(dataset_path)
@@ -346,7 +227,7 @@ def eval(args):
         s_string = f"-synth{args.synth}"
         if args.eq:
             s_string = f"-syntheq{args.synth}"
-    json_string = f'{basename}-{matches_basename}{s_string}.json'
+    json_string = f'focal-{basename}-{matches_basename}{s_string}.json'
 
     if args.load:
         print("Loading: ", json_string)
@@ -366,15 +247,10 @@ def eval(args):
         k_dict = {k.split('-')[0]: v[2, 2] for k, v in P_file.items()}
         camera_dicts = get_camera_dicts(os.path.join(dataset_path, 'K.h5'))
 
-        plt.hist(k_dict.values())
-        plt.show()
-
         pairs = get_pairs(C_file)
 
         if args.first is not None:
             pairs = pairs[:args.first]
-
-        dist = get_random_rd_distribution()
 
         def gen_data():
             for img_name_1, img_name_2 in pairs:
@@ -460,7 +336,7 @@ def eval(args):
 
     print("Printing results for all combinations")
     print_results(experiments, results)
-    draw_cumplots(experiments, results)
+    # draw_cumplots(experiments, results)
 
     print("Printing results for pairs with equal intrinsics")
     print_results(experiments, results, eq_only=True)
