@@ -25,6 +25,7 @@ def parse_args():
     parser.add_argument('-g', '--graph', action='store_true', default=False)
     parser.add_argument('-s', '--synth', type=int, default=0)
     parser.add_argument('-e', '--eq', action='store_true', default=False)
+    parser.add_argument('--net', action='store_true', default=False)
     parser.add_argument('-a', '--append', action='store_true', default=False)
     parser.add_argument('feature_file')
     parser.add_argument('dataset_path')
@@ -71,7 +72,7 @@ def get_result_dict(info, image_pair, k1_gt, k2_gt, R_gt, t_gt, K1, K2, T1, T2):
     out['k2_err'] = k_err(k2_gt, k2_est)
     out['k2'] = k2_est
     out['k2_gt'] = k2_gt
-    
+
     out['f1_err'] = f_err(f1_gt, f1_est)
     out['f1'] = f1_est
     out['f1_gt'] = f1_gt
@@ -88,7 +89,7 @@ def get_result_dict(info, image_pair, k1_gt, k2_gt, R_gt, t_gt, K1, K2, T1, T2):
 
 
 def eval_experiment(x):
-    iters, experiment, kp1_distorted, kp2_distorted, k1, k2, R_gt, t_gt, T1, T2, K1, K2, sarg = x
+    iters, experiment, kp1_distorted, kp2_distorted, k1, k2, R_gt, t_gt, T1, T2, K1, K2, net_dict, sarg = x
 
     solver = experiment.split('_')[0]
     mean_scale = (T1[0, 0] + T2[0,0]) / 2
@@ -100,30 +101,77 @@ def eval_experiment(x):
         ransac_dict = {'max_iterations': iters, 'max_epipolar_error': 3.0 / mean_scale, 'progressive_sampling': False,
                        'min_iterations': iters}
     
-    shared_intrinsics = 'kFk' in experiment or 'Efeq' in experiment
+    shared_intrinsics = 'kFk' in experiment or 'eq' in experiment
     use_minimal = 'k2k1_9pt' in experiment or 'kFk_8pt' in experiment
 
     bundle_dict = {'refine_pose': True, 'refine_focal_length': True, 'refine_principal_point': False,
                    'refine_extra_params': '_ns' not in experiment, 'max_iterations': 100}
     
-    opt_dict = {'max_error': 3.0 / 1000, 'ransac': ransac_dict, 'bundle': bundle_dict,
-                'shared_intrinsics': shared_intrinsics, 'use_minimal': use_minimal}
+    opt_dict = {'max_error': 3.0 / mean_scale, 'ransac': ransac_dict, 'bundle': bundle_dict,
+                'shared_intrinsics': shared_intrinsics, 'use_minimal': use_minimal, 'tangent_sampson': True}
+
+    if 'E_5pt' in experiment:
+        net = experiment.split('+')[1]
+        net_name, net_use = net.split('_')
+
+        camera1 = {'model': "SIMPLE_DIVISION", 'width': -1, 'height': -1,
+                   'params': [net_dict[f'{net_name}_f1'], 0.0, 0.0, net_dict[f'{net_name}_k1']]}
+        camera2 = {'model': "SIMPLE_DIVISION", 'width': -1, 'height': -1,
+                   'params': [net_dict[f'{net_name}_f2'], 0.0, 0.0, net_dict[f'{net_name}_k2']]}
+
+        opt_dict['max_error'] = opt_dict['max_error'] * mean_scale
+
+        if 'V' == net_use:
+            start = perf_counter()
+            pose, info = poselib.estimate_relative_pose(kp1_distorted, kp2_distorted, camera1, camera2, opt_dict)
+            info['runtime'] = 1000 * (perf_counter() - start)
+
+            camera1 = poselib.Camera("SIMPLE_DIVISION", [net_dict[f'{net_name}_f1'], 0.0, 0.0, net_dict[f'{net_name}_k1']], -1, -1)
+            camera2 = poselib.Camera("SIMPLE_DIVISION", [net_dict[f'{net_name}_f2'], 0.0, 0.0, net_dict[f'{net_name}_k2']], -1, -1)
+            image_pair = poselib.ImagePair(pose, camera1, camera2)
+
+            result_dict = get_result_dict(info, image_pair, k1, k2, R_gt, t_gt, K1, K2, T1, T2)
+            result_dict['experiment'] = experiment
+
+            return result_dict
+        if 'VLO' in net_use:
+            start = perf_counter()
+            image_pair, info = poselib.estimate_relative_pose_lo(kp1_distorted, kp2_distorted, camera1, camera2, opt_dict)
+            info['runtime'] = 1000 * (perf_counter() - start)
+            result_dict = get_result_dict(info, image_pair, k1, k2, R_gt, t_gt, K1, K2, T1, T2)
+            result_dict['experiment'] = experiment
+            return result_dict
+
 
     if 'Efeq' in experiment or 'F_7pt' in experiment:
-        rd_vals = [0.0]
-        if sarg == 3:
-            rd_vals = [-0.9]
-        if 's3' in experiment:
-            if sarg < 2:
-                rd_vals = [0.0, -0.6, -1.2]
-            elif sarg == 3:
-                rd_vals = [-0.6, -0.9, -1.2]
+        if '+' in experiment:
+            net = experiment.split('+')[1]
+            net_name, net_use = net.split('_')
+            rd_pred_1 = net_dict[f'{net_name}_k1']
+            rd_pred_2 = net_dict[f'{net_name}_k2']
+
+            if net_use == 'V':
+                bundle_dict['refine_extra_params'] = False
+
+            rd_vals_1 = [rd_pred_1]
+            rd_vals_2 = [rd_pred_2]
+        else:
+            rd_vals_1 = [0.0]
+            if sarg == 3:
+                rd_vals_1 = [-0.9]
+            if 's3' in experiment:
+                if sarg < 2:
+                    rd_vals_1 = [0.0, -0.6, -1.2]
+                elif sarg == 3:
+                    rd_vals_1 = [-0.6, -0.9, -1.2]
+            rd_vals_2 = rd_vals_1
     else:
         # Rd vals empty means we use nonminimal solvers
-        rd_vals = []
+        rd_vals_1 = []
+        rd_vals_2 = []
 
     start = perf_counter()
-    image_pair, info = poselib.estimate_focal_rd_relpose(kp1_distorted, kp2_distorted, rd_vals, opt_dict)
+    image_pair, info = poselib.estimate_focal_rd_relpose(kp1_distorted, kp2_distorted, rd_vals_1, rd_vals_2, opt_dict)
     info['runtime'] = 1000 * (perf_counter() - start)
     
     result_dict = get_result_dict(info, image_pair, k1, k2, R_gt, t_gt, K1, K2, T1, T2)
@@ -170,7 +218,7 @@ def print_results(experiments, results, eq_only=False):
 
         lo = 'kFk' if 'kFk' in exp or 'eq' in exp else 'k2Fk1'
         lo = exp.split('_')[0] if '_ns' in exp else lo
-        exp_name = exp.replace('_', ' ').replace('eq','')
+        exp_name = exp.replace('_', ' ') #.replace('eq','')
 
 
         tab.add_row([exp_name, lo,
@@ -193,23 +241,21 @@ def eval(args):
         assert synth_string in args.feature_file
         S_file = h5py.File(os.path.join(args.dataset_path, f'{synth_string}v3-distortion.h5'))
 
+    experiments = ['k2k1_9pt', 'k2Fk1_10pt', 'F_7pt', 'F_7pt_ns']
+
+    if args.synth != 2:
+        experiments.append('F_7pt_s3')
+
     if args.eq:
+        experiments.extend(['Efeq_6pt', 'Efeq_6pt_ns', 'kFk_8pt', 'kFk_9pt'])
+
         if args.synth != 2:
-            experiments = ['Efeq_6pt', 'Efeq_6pt_s3', 'Efeq_6pt_ns',
-                           'kFk_8pt', 'kFk_9pt',
-                           'k2k1_9pt', 'k2Fk1_10pt',
-                           'F_7pt', 'F_7pt_s3', 'F_7pt_ns']
-        else:
-            experiments = ['Efeq_6pt', 'Efeq_6pt_ns', 'kFk_8pt', 'kFk_9pt',
-                           'k2k1_9pt', 'k2Fk1_10pt',
-                           'F_7pt', 'F_7pt_ns']
-    else:
-        if args.synth != 2:
-            experiments = ['k2k1_9pt', 'k2Fk1_10pt',
-                           'F_7pt', 'F_7pt_s3', 'F_7pt_ns']
-        else:
-            experiments = ['k2k1_9pt', 'k2Fk1_10pt',
-                           'F_7pt', 'F_7pt_ns']
+            experiments.append('Efeq_6pt_s3')
+
+    if args.net:
+        experiments.extend(['F_7pt+Geo_V', 'F_7pt+Geo_VLO', 'E_5pt+Geo_V', 'E_5pt+Geo_VLO'])
+        if args.eq:
+            experiments.extend(['Efeq_6pt+Geo_V', 'Efeq_6pt+Geo_VLO', 'E_5pt+Geo_VLOeq'])
 
     dataset_path = args.dataset_path
     basename = os.path.basename(dataset_path)
@@ -240,6 +286,7 @@ def eval(args):
         T_file = h5py.File(os.path.join(dataset_path, 'T.h5'))
         P_file = h5py.File(os.path.join(dataset_path, 'parameters_rd.h5'))
         C_file = h5py.File(os.path.join(dataset_path, f'{args.feature_file}.h5'))
+        Geo_file = h5py.File(os.path.join(dataset_path, 'GeoCalibPredictions1.h5'))
 
         R_dict = {k: np.array(v) for k, v in R_file.items()}
         t_dict = {k: np.array(v) for k, v in T_file.items()}
@@ -247,6 +294,12 @@ def eval(args):
         h_dict = {k.split('-')[0]: v[1, 1] for k, v in P_file.items()}
         k_dict = {k.split('-')[0]: v[2, 2] for k, v in P_file.items()}
         camera_dicts = get_camera_dicts(os.path.join(dataset_path, 'K.h5'))
+        geo_k_dict = {k.split('-')[0]: v[()] for k, v in Geo_file.items() if '-k' in k}
+        geo_f_dict = {k.split('-')[0]: np.mean(v[()]) for k, v in Geo_file.items() if '-f' in k}
+
+        # scale geo dict
+        geo_k_dict = {k: v * (max(h_dict[k], w_dict[k])/ geo_f_dict[k])**2 for k, v in geo_k_dict.items()}
+        geo_f_dict = {k: v / max(h_dict[k], w_dict[k]) for k, v in geo_f_dict.items()}
 
         pairs = get_pairs(C_file)
 
@@ -304,12 +357,15 @@ def eval(args):
                     k1 = k_dict[img_name_1]
                     k2 = k_dict[img_name_2]
 
+                net_dict = {'Geo_k1': geo_k_dict[img_name_1], 'Geo_k2': geo_k_dict[img_name_2],
+                            'Geo_f1': geo_f_dict[img_name_1], 'Geo_f2': geo_f_dict[img_name_2]}
+
                 # if k1 > -0.1 or k2 > -0.1:
                 #     continue
 
                 for experiment in experiments:
                     for iterations in iterations_list:
-                        yield iterations, experiment, np.copy(kp1_distorted), np.copy(kp2_distorted), k1, k2, R_gt, t_gt, T1, T2, K1, K2, args.synth
+                        yield iterations, experiment, np.copy(kp1_distorted), np.copy(kp2_distorted), k1, k2, R_gt, t_gt, T1, T2, K1, K2, net_dict, args.synth
 
 
         total_length = len(experiments) * len(pairs) * len(iterations_list)

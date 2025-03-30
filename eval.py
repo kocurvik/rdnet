@@ -81,7 +81,7 @@ def get_result_dict(info, kp1_distorted, kp2_distorted, F_est, k1_est, k2_est, k
 
 
 def eval_experiment(x):
-    iters, experiment, kp1_distorted, kp2_distorted, k1, k2, R_gt, t_gt, T1, T2, K1, K2, sarg = x
+    iters, experiment, kp1_distorted, kp2_distorted, k1, k2, R_gt, t_gt, T1, T2, K1, K2, net_dict, sarg = x
 
     solver = experiment.split('_')[0]
 
@@ -96,8 +96,6 @@ def eval_experiment(x):
     else:
         ransac_dict = {'max_iterations': iters, 'max_epipolar_error': 3.0 / mean_scale, 'progressive_sampling': False,
                        'min_iterations': iters}
-
-    ransac_dict['pseudo_tsamp'] = -1.2 if 'ps0.6' in experiment else 1.0
 
     if solver == 'Feq':
         rd_vals = [0.0]
@@ -358,6 +356,7 @@ def eval(args):
         T_file = h5py.File(os.path.join(dataset_path, 'T.h5'))
         P_file = h5py.File(os.path.join(dataset_path, 'parameters_rd.h5'))
         C_file = h5py.File(os.path.join(dataset_path, f'{args.feature_file}.h5'))
+        Geo_file = h5py.File(os.path.join(dataset_path, 'GeoCalibPredictions1.h5'))
 
         R_dict = {k: np.array(v) for k, v in R_file.items()}
         t_dict = {k: np.array(v) for k, v in T_file.items()}
@@ -365,6 +364,8 @@ def eval(args):
         h_dict = {k.split('-')[0]: v[1, 1] for k, v in P_file.items()}
         k_dict = {k.split('-')[0]: v[2, 2] for k, v in P_file.items()}
         camera_dicts = get_camera_dicts(os.path.join(dataset_path, 'K.h5'))
+        geo_dict = {k.split('-')[0]: v[()] for k, v in Geo_file.items()}
+
 
         plt.hist(k_dict.values())
         plt.show()
@@ -427,12 +428,14 @@ def eval(args):
                     k1 = k_dict[img_name_1]
                     k2 = k_dict[img_name_2]
 
+                net_dict = {'Geo_k1': geo_dict[img_name_1], 'Geo_k2': geo_dict[img_name_2]}
+
                 # if k1 > -0.1 or k2 > -0.1:
                 #     continue
 
                 for experiment in experiments:
                     for iterations in iterations_list:
-                        yield iterations, experiment, np.copy(kp1_distorted), np.copy(kp2_distorted), k1, k2, R_gt, t_gt, T1, T2, K1, K2, args.synth
+                        yield iterations, experiment, np.copy(kp1_distorted), np.copy(kp2_distorted), k1, k2, R_gt, t_gt, T1, T2, K1, K2, args.synth, net_dict
 
 
         total_length = len(experiments) * len(pairs) * len(iterations_list)
