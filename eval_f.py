@@ -119,8 +119,6 @@ def eval_experiment(x):
         camera2 = {'model': "SIMPLE_DIVISION", 'width': -1, 'height': -1,
                    'params': [net_dict[f'{net_name}_f2'], 0.0, 0.0, net_dict[f'{net_name}_k2']]}
 
-        opt_dict['max_error'] = opt_dict['max_error'] * mean_scale
-
         if 'V' == net_use:
             start = perf_counter()
             pose, info = poselib.estimate_relative_pose(kp1_distorted, kp2_distorted, camera1, camera2, opt_dict)
