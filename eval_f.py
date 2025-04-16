@@ -24,6 +24,7 @@ def parse_args():
     parser.add_argument('-l', '--load', action='store_true', default=False)
     parser.add_argument('-g', '--graph', action='store_true', default=False)
     parser.add_argument('-s', '--synth', type=int, default=0)
+    parser.add_argument('-t', '--threshold', type=float, default=3.0)
     parser.add_argument('-e', '--eq', action='store_true', default=False)
     parser.add_argument('--net', action='store_true', default=False)
     parser.add_argument('-a', '--append', action='store_true', default=False)
@@ -89,16 +90,16 @@ def get_result_dict(info, image_pair, k1_gt, k2_gt, R_gt, t_gt, K1, K2, T1, T2):
 
 
 def eval_experiment(x):
-    iters, experiment, kp1_distorted, kp2_distorted, k1, k2, R_gt, t_gt, T1, T2, K1, K2, net_dict, sarg = x
+    iters, experiment, kp1_distorted, kp2_distorted, k1, k2, R_gt, t_gt, T1, T2, K1, K2, net_dict, sarg, t = x
 
     solver = experiment.split('_')[0]
     mean_scale = (T1[0, 0] + T2[0,0]) / 2
     
     if iters is None:
-        ransac_dict = {'max_iterations': 10000, 'max_epipolar_error': 3.0 / mean_scale, 'progressive_sampling': False,
+        ransac_dict = {'max_iterations': 10000, 'max_epipolar_error': t / mean_scale, 'progressive_sampling': False,
                        'min_iterations': 100, 'lo_iterations': 25}
     else:
-        ransac_dict = {'max_iterations': iters, 'max_epipolar_error': 3.0 / mean_scale, 'progressive_sampling': False,
+        ransac_dict = {'max_iterations': iters, 'max_epipolar_error': t / mean_scale, 'progressive_sampling': False,
                        'min_iterations': iters}
     
     shared_intrinsics = 'kFk' in experiment or 'eq' in experiment
@@ -242,9 +243,12 @@ def print_results(experiments, results, eq_only=False):
 def eval(args):
     if args.synth:
         chars = ['', 'A', 'B', 'C']
-        synth_string = f'synth{chars[args.synth]}'
+        synth_char = chars[args.synth]
+        synth_string = f'synth{synth_char}'
         assert synth_string in args.feature_file
-        S_file = h5py.File(os.path.join(args.dataset_path, f'{synth_string}v3-distortion.h5'))
+        eq_string = 'eq' if args.eq else 'uneq'
+        feq_string = 'eq' if args.eq else 'uneq-final'
+        S_file = h5py.File(os.path.join(args.dataset_path, f'{synth_string}-{feq_string}-distortion.h5'))
 
     experiments = ['k2k1_9pt', 'k2Fk1_10pt', 'F_7pt', 'F_7pt_ns']
 
@@ -281,6 +285,7 @@ def eval(args):
         s_string = f"-synth{args.synth}"
         if args.eq:
             s_string = f"-syntheq{args.synth}"
+    t_string = "" if args.threshold == 3.0 else f'-{args.threshold}t'
     json_string = f'focal-{basename}-{matches_basename}{s_string}.json'
 
     if args.load:
@@ -293,23 +298,58 @@ def eval(args):
         T_file = h5py.File(os.path.join(dataset_path, 'T.h5'))
         P_file = h5py.File(os.path.join(dataset_path, 'parameters_rd.h5'))
         C_file = h5py.File(os.path.join(dataset_path, f'{args.feature_file}.h5'))
-        Geo_file = h5py.File(os.path.join(dataset_path, 'GeoCalibPredictions_kfg.h5'))
+        if args.synth:
+            Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_{synth_char}-{eq_string}-final.h5'))
+        else:
+            Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_kfg.h5'))
 
         R_dict = {k: np.array(v) for k, v in R_file.items()}
         t_dict = {k: np.array(v) for k, v in T_file.items()}
         w_dict = {k.split('-')[0]: v[0, 0] for k, v in P_file.items()}
         h_dict = {k.split('-')[0]: v[1, 1] for k, v in P_file.items()}
+
+        if args.synth:
+            w_dict = {k: v // 4 for k, v in w_dict.items()}
+            h_dict = {k: v // 4 for k, v in h_dict.items()}
+
         k_dict = {k.split('-')[0]: v[2, 2] for k, v in P_file.items()}
         camera_dicts = get_camera_dicts(os.path.join(dataset_path, 'K.h5'))
-        geo_k_dict = {k.split('-')[0]: v[()] for k, v in Geo_file.items() if '-k' in k}
-        geo_f_dict = {k.split('-')[0]: np.mean(v[()]) for k, v in Geo_file.items() if '-f' in k}
-        geo_g_dict = {k.split('-')[0]: np.array(v) for k, v in Geo_file.items() if '-g' in k}
-
-        # scale geo dict
-        geo_k_dict = {k: v * (max(h_dict[k], w_dict[k])/ geo_f_dict[k])**2 for k, v in geo_k_dict.items()}
-        geo_f_dict = {k: v / max(h_dict[k], w_dict[k]) for k, v in geo_f_dict.items()}
 
         pairs = get_pairs(C_file)
+
+        if args.synth:
+            geo_k_dict = {}
+            geo_f_dict = {}
+            geo_g_dict = {}
+
+            for img_name_1, img_name_2 in pairs:
+                pair_str = f'{img_name_1}-{img_name_2}'
+                k1 = np.mean(Geo_file[f'{pair_str}-k1'][()])
+                f1 = np.mean(Geo_file[f'{pair_str}-f1'][()])
+                k2 = np.mean(Geo_file[f'{pair_str}-k2'][()])
+                f2 = np.mean(Geo_file[f'{pair_str}-f2'][()])
+
+                k1 *= (max(h_dict[img_name_1], w_dict[img_name_1]) / f1) ** 2
+                f1 /= max(h_dict[img_name_1], w_dict[img_name_1])
+
+                k2 *= (max(h_dict[img_name_2], w_dict[img_name_2])  / f2) ** 2
+                f2 /= max(h_dict[img_name_2], w_dict[img_name_2])
+
+                geo_f_dict[f'{pair_str}-f1'] = f1
+                geo_f_dict[f'{pair_str}-f2'] = f2
+                geo_k_dict[f'{pair_str}-k1'] = k1
+                geo_k_dict[f'{pair_str}-k2'] = k2
+
+                geo_g_dict[f'{pair_str}-g1'] = np.array(Geo_file[f'{pair_str}-g1'])
+                geo_g_dict[f'{pair_str}-g2'] = np.array(Geo_file[f'{pair_str}-g1'])
+        else:
+            geo_k_dict = {k.split('-')[0]: v[()] for k, v in Geo_file.items() if '-k' in k}
+            geo_f_dict = {k.split('-')[0]: np.mean(v[()]) for k, v in Geo_file.items() if '-f' in k}
+            geo_g_dict = {k.split('-')[0]: np.array(v) for k, v in Geo_file.items() if '-g' in k}
+
+            # scale geo dict
+            geo_k_dict = {k: v * (max(h_dict[k], w_dict[k])/ geo_f_dict[k])**2 for k, v in geo_k_dict.items()}
+            geo_f_dict = {k: v / max(h_dict[k], w_dict[k]) for k, v in geo_f_dict.items()}
 
         if args.first is not None:
             pairs = pairs[:args.first]
@@ -328,9 +368,11 @@ def eval(args):
 
                 if args.synth:
                     if args.eq:
-                        matches = np.array(C_file[f'{img_name_1}-{img_name_2}-eq'])
+                        # matches = np.array(C_file[f'{img_name_1}-{img_name_2}-eq'])
+                        matches = np.array(C_file[f'{img_name_1}-{img_name_2}'])
                     else:
-                        matches = np.array(C_file[f'{img_name_1}-{img_name_2}-uneq'])
+                        # matches = np.array(C_file[f'{img_name_1}-{img_name_2}-uneq'])
+                        matches = np.array(C_file[f'{img_name_1}-{img_name_2}'])
                 else:
                     matches = np.array(C_file[f'{img_name_1}-{img_name_2}'])
 
@@ -356,25 +398,31 @@ def eval(args):
                 kp2_distorted, T2 = normalize(kp2, w_dict[img_name_2], h_dict[img_name_2])
 
                 if args.synth:
-                    k1 = S_file[f'{img_name_1}-{img_name_2}-k1'][()]
                     if args.eq:
+                        k1 = S_file[f'{img_name_1}-{img_name_2}'][()]
                         k2 = k1
                     else:
+                        k1 = S_file[f'{img_name_1}-{img_name_2}-k1'][()]
                         k2 = S_file[f'{img_name_1}-{img_name_2}-k2'][()]
                 else:
                     k1 = k_dict[img_name_1]
                     k2 = k_dict[img_name_2]
 
-                net_dict = {'Geo_k1': geo_k_dict[img_name_1], 'Geo_k2': geo_k_dict[img_name_2],
-                            'Geo_f1': geo_f_dict[img_name_1], 'Geo_f2': geo_f_dict[img_name_2],
-                            'Geo_g1': geo_g_dict[img_name_1], 'Geo_g2': geo_g_dict[img_name_2]}
-
-                # if k1 > -0.1 or k2 > -0.1:
-                #     continue
+                if args.synth:
+                    net_dict = {'Geo_k1': geo_k_dict[f'{img_name_1}-{img_name_2}-k1'],
+                                'Geo_k2': geo_k_dict[f'{img_name_1}-{img_name_2}-k2'],
+                                'Geo_f1': geo_f_dict[f'{img_name_1}-{img_name_2}-f1'],
+                                'Geo_f2': geo_f_dict[f'{img_name_1}-{img_name_2}-f2'],
+                                'Geo_g1': geo_g_dict[f'{img_name_1}-{img_name_2}-g1'],
+                                'Geo_g2': geo_g_dict[f'{img_name_1}-{img_name_2}-g2'],}
+                else:
+                    net_dict = {'Geo_k1': geo_k_dict[img_name_1], 'Geo_k2': geo_k_dict[img_name_2],
+                                'Geo_f1': geo_f_dict[img_name_1], 'Geo_f2': geo_f_dict[img_name_2],
+                                'Geo_g1': geo_g_dict[img_name_1], 'Geo_g2': geo_g_dict[img_name_2]}
 
                 for experiment in experiments:
                     for iterations in iterations_list:
-                        yield iterations, experiment, np.copy(kp1_distorted), np.copy(kp2_distorted), k1, k2, R_gt, t_gt, T1, T2, K1, K2, net_dict, args.synth
+                        yield iterations, experiment, np.copy(kp1_distorted), np.copy(kp2_distorted), k1, k2, R_gt, t_gt, T1, T2, K1, K2, net_dict, args.synth, args.threshold
 
 
         total_length = len(experiments) * len(pairs) * len(iterations_list)
