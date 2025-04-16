@@ -15,7 +15,7 @@ neq_order = ['k2k1_9pt', 'k2Fk1_10pt',
              'E_5pt+Geo_V', 'E_5pt+Geo_VLO', 'E_3pt+Geo_V', 'E_3pt+Geo_VLO']
 
 
-incdec = [1, 1, -1, -1, -1, 1, 1, 1]
+incdec = [1, 1, -1, 1, 1, 1, 1, 1]
 
 def table_text(dataset_name, eq_rows, neq_rows, sarg):
     leq = len(eq_rows)
