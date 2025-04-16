@@ -110,9 +110,16 @@ def eval_experiment(x):
     opt_dict = {'max_error': 3.0 / mean_scale, 'ransac': ransac_dict, 'bundle': bundle_dict,
                 'shared_intrinsics': shared_intrinsics, 'use_minimal': use_minimal, 'tangent_sampson': True}
 
-    if 'E_5pt' in experiment:
+    if 'E_5pt' in experiment or 'E_3pt' in experiment:
         net = experiment.split('+')[1]
         net_name, net_use = net.split('_')
+
+        if 'E_3p' in experiment:
+            g1 = net_dict[f'{net_name}_g1']
+            g2 = net_dict[f'{net_name}_g2']
+        else:
+            g1 = np.zeros(3)
+            g2 = np.zeros(3)
 
         camera1 = {'model': "SIMPLE_DIVISION", 'width': -1, 'height': -1,
                    'params': [net_dict[f'{net_name}_f1'], 0.0, 0.0, net_dict[f'{net_name}_k1']]}
@@ -121,7 +128,7 @@ def eval_experiment(x):
 
         if 'V' == net_use:
             start = perf_counter()
-            pose, info = poselib.estimate_relative_pose(kp1_distorted, kp2_distorted, camera1, camera2, opt_dict)
+            pose, info = poselib.estimate_relative_pose(kp1_distorted, kp2_distorted, camera1, camera2, opt_dict, g1, g2)
             info['runtime'] = 1000 * (perf_counter() - start)
 
             camera1 = poselib.Camera("SIMPLE_DIVISION", [net_dict[f'{net_name}_f1'], 0.0, 0.0, net_dict[f'{net_name}_k1']], -1, -1)
@@ -134,7 +141,7 @@ def eval_experiment(x):
             return result_dict
         if 'VLO' in net_use:
             start = perf_counter()
-            image_pair, info = poselib.estimate_relative_pose_lo(kp1_distorted, kp2_distorted, camera1, camera2, opt_dict)
+            image_pair, info = poselib.estimate_relative_pose_lo(kp1_distorted, kp2_distorted, camera1, camera2, opt_dict, g1, g2)
             info['runtime'] = 1000 * (perf_counter() - start)
             result_dict = get_result_dict(info, image_pair, k1, k2, R_gt, t_gt, K1, K2, T1, T2)
             result_dict['experiment'] = experiment
@@ -251,9 +258,11 @@ def eval(args):
             experiments.append('Efeq_6pt_s3')
 
     if args.net:
-        experiments.extend(['F_7pt+Geo_V', 'F_7pt+Geo_VLO', 'E_5pt+Geo_V', 'E_5pt+Geo_VLO'])
+        experiments.extend(['F_7pt+Geo_V', 'F_7pt+Geo_VLO', 'E_5pt+Geo_V', 'E_5pt+Geo_VLO', 'E_3pt+Geo_V', 'E_3pt+Geo_VLO'])
         if args.eq:
-            experiments.extend(['Efeq_6pt+Geo_V', 'Efeq_6pt+Geo_VLO', 'E_5pt+Geo_VLOeq'])
+            experiments.extend(['Efeq_6pt+Geo_V', 'Efeq_6pt+Geo_VLO', 'E_5pt+Geo_VLOeq', 'E_3pt+Geo_VLOeq'])
+
+    # experiments = ['E_5pt+Geo_VLO']
 
     dataset_path = args.dataset_path
     basename = os.path.basename(dataset_path)
@@ -284,7 +293,7 @@ def eval(args):
         T_file = h5py.File(os.path.join(dataset_path, 'T.h5'))
         P_file = h5py.File(os.path.join(dataset_path, 'parameters_rd.h5'))
         C_file = h5py.File(os.path.join(dataset_path, f'{args.feature_file}.h5'))
-        Geo_file = h5py.File(os.path.join(dataset_path, 'GeoCalibPredictions1.h5'))
+        Geo_file = h5py.File(os.path.join(dataset_path, 'GeoCalibPredictions_kfg.h5'))
 
         R_dict = {k: np.array(v) for k, v in R_file.items()}
         t_dict = {k: np.array(v) for k, v in T_file.items()}
@@ -294,6 +303,7 @@ def eval(args):
         camera_dicts = get_camera_dicts(os.path.join(dataset_path, 'K.h5'))
         geo_k_dict = {k.split('-')[0]: v[()] for k, v in Geo_file.items() if '-k' in k}
         geo_f_dict = {k.split('-')[0]: np.mean(v[()]) for k, v in Geo_file.items() if '-f' in k}
+        geo_g_dict = {k.split('-')[0]: np.array(v) for k, v in Geo_file.items() if '-g' in k}
 
         # scale geo dict
         geo_k_dict = {k: v * (max(h_dict[k], w_dict[k])/ geo_f_dict[k])**2 for k, v in geo_k_dict.items()}
@@ -356,7 +366,8 @@ def eval(args):
                     k2 = k_dict[img_name_2]
 
                 net_dict = {'Geo_k1': geo_k_dict[img_name_1], 'Geo_k2': geo_k_dict[img_name_2],
-                            'Geo_f1': geo_f_dict[img_name_1], 'Geo_f2': geo_f_dict[img_name_2]}
+                            'Geo_f1': geo_f_dict[img_name_1], 'Geo_f2': geo_f_dict[img_name_2],
+                            'Geo_g1': geo_g_dict[img_name_1], 'Geo_g2': geo_g_dict[img_name_2]}
 
                 # if k1 > -0.1 or k2 > -0.1:
                 #     continue
