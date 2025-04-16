@@ -6,12 +6,12 @@ import numpy as np
 from utils.data import basenames_pt, basenames_eth
 
 eq_order = ['k2k1_9pt', 'k2Fk1_10pt', 'kFk_8pt', 'kFk_9pt',
-            'Fns_7pt', 'F_7pt', 'F_7pt_s3', 'Efeq_6pt', 'Efeq_6pt_s3', 'F_7pt+Geo_V', 'F_7pt+Geo_VLO',
+            'F_7pt_ns', 'F_7pt', 'F_7pt_s3', 'Efeq_6pt', 'Efeq_6pt_s3', 'F_7pt+Geo_V', 'F_7pt+Geo_VLO',
             'Efeq_6pt+Geo_V', 'Efeq_6pt+Geo_VLO',
             'E_5pt+Geo_V', 'E_5pt+Geo_VLO', 'E_3pt+Geo_V', 'E_3pt+Geo_VLO']
 
 neq_order = ['k2k1_9pt', 'k2Fk1_10pt',
-             'Fns_7pt', 'F_7pt', 'F_7pt_s3',  'F_7pt+Geo_V', 'F_7pt+Geo_VLO',
+             'F_7pt_ns', 'F_7pt', 'F_7pt_s3',  'F_7pt+Geo_V', 'F_7pt+Geo_VLO',
              'E_5pt+Geo_V', 'E_5pt+Geo_VLO', 'E_3pt+Geo_V', 'E_3pt+Geo_VLO']
 
 
