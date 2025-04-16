@@ -103,7 +103,7 @@ def get_rows(results, order):
         k_avg = np.mean(k_errs)
         k_med = np.median(k_errs)
 
-        f_errs = np.array([0.5 * (np.abs(r['f1'] - r['f1_gt'])/r['f1_gt'] + np.abs(r['f2'] - r['f2_gt'])/r['f2_gt']) for r in exp_results])
+        f_errs = np.array([0.5 * (np.abs(4 * r['f1'] - r['f1_gt'])/r['f1_gt'] + np.abs(4 * r['f2'] - r['f2_gt'])/r['f2_gt']) for r in exp_results])
         f_errs[np.isnan(f_errs)] = 1.0
         f_avg = np.mean(f_errs)
         f_med = np.median(f_errs)
