@@ -154,8 +154,8 @@ def generate_table(dataset, i, feat):
         name = name + f' - Synth {synth_char}'
 
     if i > 0:
-        neq_results_type = f'focal-synth{synth_char}-uneq-final-pairs-features_{feat}_noresize_2048-LG-synth{i}'
-        eq_results_type = f'focal-synth{synth_char}-eq-final-pairs-features_{feat}_noresize_2048-LG-synth{i}'
+        neq_results_type = f'synth{synth_char}-uneq-final-pairs-features_{feat}_noresize_2048-LG-synth{i}'
+        eq_results_type = f'synth{synth_char}-eq-final-pairs-features_{feat}_noresize_2048-LG-synth{i}'
     else:
         neq_results_type = f'pairs-features_{feat}_noresize_2048-LG'
         eq_results_type = f'pairs-features_{feat}_noresize_2048-LG_eq'
@@ -165,11 +165,11 @@ def generate_table(dataset, i, feat):
     neq_results = []
     eq_results = []
     for basename in basenames:
-        json_path = os.path.join('results', f'{basename}-{neq_results_type}.json')
+        json_path = os.path.join('results', f'focal-{basename}-{neq_results_type}.json')
         print(f'json_path: {json_path}')
         with open(json_path, 'r') as f:
             neq_results.extend(json.load(f))
-        json_path = os.path.join('results', f'{basename}-{eq_results_type}.json')
+        json_path = os.path.join('results', f'focal-{basename}-{eq_results_type}.json')
         print(f'json_path: {json_path}')
         with open(json_path, 'r') as f:
             eq_results.extend(json.load(f))
