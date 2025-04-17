@@ -51,9 +51,9 @@ def table_text(dataset_name, eq_rows, neq_rows, sarg):
         f'    & 9pt \\Fk & $\\R,\\tvec,f,\\lambda$ & \\ding{{55}} & {eq_rows[3]} \\\\\n'        
         f'    & 7pt \\F & $\\R,\\tvec,f$ & $\\lambda$ = 0 & {eq_rows[4]} \\\\\n'
         f'    & 7pt \\F & $\\R,\\tvec,f,\\lambda$ & $\\lambda = {rd_val}$ & {eq_rows[5]} \\\\\n'
-        f'    & 7pt \\F & $\\R,\\tvec,f,\\lambda$ & $\\lambda \\in \\{{{rd_vals}\\}}$ & {eq_rows[6]} \\\\\n'
+        f'    {comment}& 7pt \\F & $\\R,\\tvec,f,\\lambda$ & $\\lambda \\in \\{{{rd_vals}\\}}$ & {eq_rows[6]} \\\\\n'
         f'    & 6pt \\Ef & $\\R,\\tvec,f,\\lambda$ & $\\lambda = {rd_val}$ & {eq_rows[7]} \\\\\n'
-        f'    & 6pt \\Ef & $\\R,\\tvec,f,\\lambda$ & $\\lambda \\in \\{{{rd_vals}\\}}$ & {eq_rows[8]} \\\\\n'
+        f'    {comment}& 6pt \\Ef & $\\R,\\tvec,f,\\lambda$ & $\\lambda \\in \\{{{rd_vals}\\}}$ & {eq_rows[8]} \\\\\n'
         f'    & 7pt \\F & $\\R,\\tvec,f$ & GeoCalib - $\\lambda$ & {eq_rows[9]} \\\\\n'
         f'    & 7pt \\F & $\\R,\\tvec,f,\\lambda$ &  GeoCalib - $\\lambda$ & {eq_rows[10]} \\\\\n'
         f'    & 6pt \\Ef & $\\R,\\tvec,f$ & GeoCalib - $\\lambda$ & {eq_rows[11]} \\\\\n'
@@ -70,7 +70,7 @@ def table_text(dataset_name, eq_rows, neq_rows, sarg):
         f'    & 10pt \\Fkk & $\\R,\\tvec,f_1,f_2,\\lambda_1, \\lambda_2$ & \\ding{{55}} & {neq_rows[1]} \\\\\n'
         f'    & 7pt \\F & $\\R,\\tvec,f_1, f_2$ & $\\lambda_1 = \\lambda_2$ = 0 & {neq_rows[2]} \\\\\n'
         f'    & 7pt \\F & $\\R,\\tvec,f_1, f_2, \\lambda_1, \\lambda_2$ & $\\lambda_1 = \\lambda_2 = {rd_val}  $ & {neq_rows[3]} \\\\\n'
-        f'    & 7pt \\F & $\\R,\\tvec,f_1, f_2, \\lambda_1, \\lambda_2$ & $\\lambda_1, \\lambda_2 \\in \\{{{rd_vals}\\}} $ & {neq_rows[4]} \\\\\n'
+        f'    {comment} & 7pt \\F & $\\R,\\tvec,f_1, f_2, \\lambda_1, \\lambda_2$ & $\\lambda_1, \\lambda_2 \\in \\{{{rd_vals}\\}} $ & {neq_rows[4]} \\\\\n'
         f'    & 7pt \\F & $\\R,\\tvec,f_1, f_2$ & GeoCalib - $\\lambda_1, \\lambda_2$ & {neq_rows[5]} \\\\\n'
         f'    & 7pt \\F & $\\R,\\tvec,f_1,f_2,\\lambda_1, \\lambda_2$ &  GeoCalib - $\\lambda_1, \\lambda_2$ & {neq_rows[6]} \\\\\n'
         f'    & 5pt \\E & $\\R, \\tvec$ & GeoCalib - $\\lambda_1, \\lambda_2,f_1, f_2$ & {neq_rows[7]} \\\\\n'
@@ -100,6 +100,7 @@ def get_rows(results, order):
 
         k_errs = np.array([0.5 * (np.abs(r['k1'] - r['k1_gt']) + np.abs(r['k2'] - r['k2_gt'])) for r in exp_results])
         k_errs[np.isnan(k_errs)] = 4.0
+        k_errs[k_errs > 4.0] = 4.0
         k_avg = np.mean(k_errs)
         k_med = np.median(k_errs)
 
@@ -187,9 +188,9 @@ def generate_table(dataset, i, feat):
     print(table_text(name, eq_rows, neq_rows, i))
 
 if __name__ == '__main__':
-    # for features in ['superpoint', 'sift']:
-    #     generate_table('rotunda', 0, features)
-    #     generate_table('cathedral', 0, features)
+    for features in ['superpoint']:
+        generate_table('rotunda', 0, features)
+        generate_table('cathedral', 0, features)
 
     # for i in range(1, 4):
     #     generate_table('pt', i, 'superpoint')
