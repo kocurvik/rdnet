@@ -85,7 +85,7 @@ def table_text(dataset_name, eq_rows, neq_rows, sarg):
 
 
 
-def get_rows(results, order):
+def get_rows(results, order, synth=False):
     num_rows = []
 
     for experiment in order:
@@ -104,7 +104,12 @@ def get_rows(results, order):
         k_avg = np.mean(k_errs)
         k_med = np.median(k_errs)
 
-        f_errs = np.array([0.5 * (np.abs(4 * r['f1'] - r['f1_gt'])/r['f1_gt'] + np.abs(4 * r['f2'] - r['f2_gt'])/r['f2_gt']) for r in exp_results])
+        if synth:
+            f_errs = np.array([0.5 * (np.abs(4 * r['f1'] - r['f1_gt'])/r['f1_gt'] + np.abs(4 * r['f2'] - r['f2_gt'])/r['f2_gt']) for r in exp_results])
+        else:
+            f_errs = np.array(
+                [0.5 * (np.abs(r['f1'] - r['f1_gt']) / r['f1_gt'] + np.abs(r['f2'] - r['f2_gt']) / r['f2_gt'])
+                 for r in exp_results])
         f_errs[np.isnan(f_errs)] = 1.0
         f_avg = np.mean(f_errs)
         f_med = np.median(f_errs)
@@ -183,8 +188,8 @@ def generate_table(dataset, i, feat):
     print("Printing: ", name)
     print(30 * '*')
 
-    neq_rows = get_rows(neq_results, neq_order)
-    eq_rows = get_rows(eq_results, eq_order)
+    neq_rows = get_rows(neq_results, neq_order, synth=i > 0)
+    eq_rows = get_rows(eq_results, eq_order, synth=i > 0)
     print(table_text(name, eq_rows, neq_rows, i))
 
 if __name__ == '__main__':
