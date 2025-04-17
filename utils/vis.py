@@ -14,6 +14,22 @@ print(colors)
 
 print(sns.color_palette("tab10").as_hex())
 
+def get_color_style(experiment, experiments):
+    basenames = sorted(list(set([x.split('+')[0] for x in experiments])))
+    color_dict = {exp: sns.color_palette("tab10")[i] for i, exp in enumerate(basenames)}
+
+    color = color_dict[experiment.split('+')[0]]
+
+    if '+' in experiment and 'VLO' in experiment:
+        style = 'dashed'
+    elif '+' in experiment:
+        style = 'dotted'
+    else:
+        style = 'solid'
+
+    return color, style
+
+
 
 
 
@@ -44,7 +60,8 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None):
             xs.append(mean_runtime)
             ys.append(AUC10)
 
-        plt.semilogx(xs, ys, label=experiment, marker='*')#, color=colors[experiment])
+        color, style = get_color_style(experiment, experiments)
+        plt.semilogx(xs, ys, label=experiment, marker='*', color=color, linestyle=style)
 
     # plt.xlim([5.0, 1.9e4])
     plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
@@ -57,6 +74,7 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None):
         print(f'saved pose: {title}')
 
         plt.legend()
+        plt.show()
         plt.savefig(f'figs/{title}_pose.png')
         print(f'saved pose: {title}')
 
@@ -81,17 +99,18 @@ def draw_results_k_med(results, experiments, iterations_list, title=None):
             # errs.extend([np.abs(r['k2'] - r['k2_gt']) for r in iter_results])
             # errs = np.array(errs)
             errs[np.isnan(errs)] = 2.0
-            med = np.mean(errs)
+            med = np.median(errs)
 
             xs.append(mean_runtime)
             ys.append(med)
 
-        plt.semilogx(xs, ys, label=experiment, marker='*')#, color=colors[experiment])
+        color, style = get_color_style(experiment, experiments)
+        plt.semilogx(xs, ys, label=experiment, marker='*', color=color, linestyle=style)
 
     plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
     # plt.ylabel('Median absolute $\\lambda$ error', fontsize=large_size)
     # plt.ylabel('Mean $\\epsilon(\\lambda)$', fontsize=large_size, **font)
-    plt.ylabel('Mean ε(λ)', fontsize=large_size, **font)
+    plt.ylabel('Median ε(λ)', fontsize=large_size, **font)
     # plt.ylim([0.0, 0.8])
     # plt.xlim([5.0, 1.9e4])
     plt.tick_params(axis='x', which='major', labelsize=small_size)

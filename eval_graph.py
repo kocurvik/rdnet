@@ -185,22 +185,36 @@ def eval_experiment(x):
     return result_dict
 
 
-def geo_iter_runtime(i):
-    return 5 * i + 40
+def geo_iter_runtime(i, eq=False):
+    if eq:
+        return 10 * i + 80
+
+    return 10 * i + 80
 
 
 def eval(args):
     # geo_iters = [1, 5, 10, 15, 20, 30]
-    geo_iters = [1, 5, 30]
+    geo_iters = [1, 2, 5, 30]
     if args.eq:
-        experiments = ['Efeq_6pt', 'Efeq_6pt_s3', 'kFk_9pt']
+        experiments = ['Efeq_6pt', 'Efeq_6pt_s3', 'k2Fk1_10pt']
         base_runtimes = [0, 0, 0]
         experiments.extend([f'Efeq_6pt+Geo_VLO_{i}' for i in geo_iters])
+        base_runtimes.extend([geo_iter_runtime(i, eq=True) for i in geo_iters])
+        experiments.extend([f'E_5pt+Geo_VLO_{i}' for i in geo_iters])
+        base_runtimes.extend([geo_iter_runtime(i, eq=True) for i in geo_iters])
+        experiments.extend([f'E_3pt+Geo_VLO_{i}' for i in geo_iters])
+        base_runtimes.extend([geo_iter_runtime(i, eq=True) for i in geo_iters])
+    else:
+        experiments = ['F_7pt', 'F_7pt_s3', 'k2Fk1_10pt']
+        base_runtimes = [0, 0, 0]
+        experiments.extend([f'E_5pt+Geo_VLO_{i}' for i in geo_iters])
+        base_runtimes.extend([geo_iter_runtime(i) for i in geo_iters])
+        experiments.extend([f'E_5pt+Geo_V_{i}' for i in geo_iters])
         base_runtimes.extend([geo_iter_runtime(i) for i in geo_iters])
         experiments.extend([f'E_3pt+Geo_VLO_{i}' for i in geo_iters])
         base_runtimes.extend([geo_iter_runtime(i) for i in geo_iters])
-    else:
-        experiments = []
+        experiments.extend([f'E_3pt+Geo_V_{i}' for i in geo_iters])
+        base_runtimes.extend([geo_iter_runtime(i) for i in geo_iters])
 
     dataset_path = args.dataset_path
     basename = os.path.basename(dataset_path)
