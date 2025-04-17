@@ -195,9 +195,10 @@ def geo_iter_runtime(i, eq=False):
 def eval(args):
     # geo_iters = [1, 5, 10, 15, 20, 30]
     geo_iters = [1, 2, 5, 30]
+    base_runtimes = []
     if args.eq:
         experiments = ['Efeq_6pt', 'Efeq_6pt_s3', 'k2Fk1_10pt']
-        base_runtimes = [0, 0, 0]
+        base_runtimes.extend([0, 0, 0])
         experiments.extend([f'Efeq_6pt+Geo_VLO_{i}' for i in geo_iters])
         base_runtimes.extend([geo_iter_runtime(i, eq=True) for i in geo_iters])
         experiments.extend([f'E_5pt+Geo_VLO_{i}' for i in geo_iters])
@@ -206,7 +207,7 @@ def eval(args):
         base_runtimes.extend([geo_iter_runtime(i, eq=True) for i in geo_iters])
     else:
         experiments = ['F_7pt', 'F_7pt_s3', 'k2Fk1_10pt']
-        base_runtimes = [0, 0, 0]
+        base_runtimes.extend([0, 0, 0])
         experiments.extend([f'E_5pt+Geo_VLO_{i}' for i in geo_iters])
         base_runtimes.extend([geo_iter_runtime(i) for i in geo_iters])
         experiments.extend([f'E_5pt+Geo_V_{i}' for i in geo_iters])
