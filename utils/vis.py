@@ -44,9 +44,9 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None):
             xs.append(mean_runtime)
             ys.append(AUC10)
 
-        plt.semilogx(xs, ys, label=experiment, marker='*', color=colors[experiment])
+        plt.semilogx(xs, ys, label=experiment, marker='*')#, color=colors[experiment])
 
-    plt.xlim([5.0, 1.9e4])
+    # plt.xlim([5.0, 1.9e4])
     plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
     plt.ylabel('AUC@10$^\\circ$', fontsize=large_size, **font)
     plt.tick_params(axis='x', which='major', labelsize=small_size)
@@ -54,6 +54,10 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None):
     if title is not None:
         # plt.legend()
         plt.savefig(f'figs/{title}_pose.pdf', bbox_inches='tight', pad_inches=0)
+        print(f'saved pose: {title}')
+
+        plt.legend()
+        plt.savefig(f'figs/{title}_pose.png')
         print(f'saved pose: {title}')
 
     else:
@@ -82,20 +86,23 @@ def draw_results_k_med(results, experiments, iterations_list, title=None):
             xs.append(mean_runtime)
             ys.append(med)
 
-        plt.semilogx(xs, ys, label=experiment, marker='*', color=colors[experiment])
+        plt.semilogx(xs, ys, label=experiment, marker='*')#, color=colors[experiment])
 
     plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
     # plt.ylabel('Median absolute $\\lambda$ error', fontsize=large_size)
     # plt.ylabel('Mean $\\epsilon(\\lambda)$', fontsize=large_size, **font)
     plt.ylabel('Mean ε(λ)', fontsize=large_size, **font)
-    plt.ylim([0.0, 0.8])
-    plt.xlim([5.0, 1.9e4])
+    # plt.ylim([0.0, 0.8])
+    # plt.xlim([5.0, 1.9e4])
     plt.tick_params(axis='x', which='major', labelsize=small_size)
     plt.tick_params(axis='y', which='major', labelsize=small_size)
     if title is not None:
         # plt.legend()
         plt.savefig(f'figs/{title}_k.pdf', bbox_inches='tight', pad_inches=0)
         print(f'saved k: {title}')
+
+        plt.legend()
+        plt.savefig(f'figs/{title}_k.png')
     else:
         plt.legend()
         plt.show()
@@ -104,6 +111,9 @@ def draw_results_k_med(results, experiments, iterations_list, title=None):
 def draw_graphs(name):
     with open(os.path.join('results', f'{name}.json'), 'r') as f:
         results = json.load(f)
+
+    experiments = list(set([x['experiment'] for x in results]))
+
     draw_results_pose_auc_10(results, experiments, iterations_list, title=name)
     draw_results_k_med(results, experiments, iterations_list, title=name)
 
@@ -111,7 +121,7 @@ def draw_graphs(name):
 
 
 if __name__ == '__main__':
-    draw_graphs('cathedral-graph-pairs-features_superpoint_noresize_2048-LG_eq')
-    draw_graphs('cathedral-graph-pairs-features_superpoint_noresize_2048-LG')
-    draw_graphs('rotunda_new-graph-pairs-features_superpoint_noresize_2048-LG_eq')
-    draw_graphs('rotunda_new-graph-pairs-features_superpoint_noresize_2048-LG')
+    draw_graphs('focal-graph-st_vitus_all-pairs-features_superpoint_noresize_2048-LG')
+    # draw_graphs('st_vitus_all-focal-graph-pairs-features_superpoint_noresize_2048-LG')
+    # draw_graphs('rotunda_new-graph-pairs-features_superpoint_noresize_2048-LG_eq')
+    # draw_graphs('rotunda_new-graph-pairs-features_superpoint_noresize_2048-LG')

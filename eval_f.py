@@ -250,7 +250,10 @@ def eval(args):
             else:
                 Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_{synth_char}-{eq_string}-final.h5'))
         else:
-            Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_kfg.h5'))
+            if args.eq:
+                Geo_file = h5py.File(os.path.join(dataset_path, 'GeoCalibPredictions_kfg_multi2.h5'))
+            else:
+                Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_kfg.h5'))
 
         R_dict = {k: np.array(v) for k, v in R_file.items()}
         t_dict = {k: np.array(v) for k, v in T_file.items()}
@@ -266,7 +269,7 @@ def eval(args):
 
         pairs = get_pairs(C_file)
 
-        if args.synth:
+        if args.synth or args.eq:
             geo_k_dict = {}
             geo_f_dict = {}
             geo_g_dict = {}
@@ -345,7 +348,7 @@ def eval(args):
                     k1 = k_dict[img_name_1]
                     k2 = k_dict[img_name_2]
 
-                if args.synth:
+                if args.synth or args.eq:
                     net_dict = {'Geo_k1': geo_k_dict[f'{img_name_1}-{img_name_2}-k1'],
                                 'Geo_k2': geo_k_dict[f'{img_name_1}-{img_name_2}-k2'],
                                 'Geo_f1': geo_f_dict[f'{img_name_1}-{img_name_2}-f1'],
