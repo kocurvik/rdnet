@@ -2,8 +2,10 @@ import json
 import os
 
 import numpy as np
+from prettytable import PrettyTable
 
 from utils.data import basenames_pt, basenames_eth
+from utils.geometry import k_err, f_err
 
 eq_order = ['k2k1_9pt', 'k2Fk1_10pt', 'kFk_8pt', 'kFk_9pt',
             'F_7pt_ns', 'F_7pt', 'F_7pt_s3', 'Efeq_6pt', 'Efeq_6pt_s3', 'F_7pt+Geo_V', 'F_7pt+Geo_VLO',
@@ -201,3 +203,57 @@ if __name__ == '__main__':
     #     generate_table('pt', i, 'superpoint')
     for i in range(1, 4):
         generate_table('eth3d', i, 'superpoint')
+
+
+def print_results(experiments, results, eq_only=False):
+    tab = PrettyTable(['solver', 'LO',
+                       'median pose err', 'Pose AUC@10',
+                       'median k err', 'k AUC@0.1',
+                       'median f err', 'f AUC@0.1',
+                       'median time', 'mean time', 'median inliers', 'mean inliers'])
+    tab.align["solver"] = "l"
+    tab.float_format = '0.2'
+
+    for exp in experiments:
+        exp_results = [x for x in results if x['experiment'] == exp]
+
+        if eq_only:
+            exp_results = [x for x in exp_results if x['k1_gt'] == x['k2_gt']]# and x['K1_gt'] == x['K2_gt']]
+        else:
+            exp_results = [x for x in exp_results if x['k1_gt'] != x['k2_gt']]  # and x['K1_gt'] == x['K2_gt']]
+
+        p_errs = np.array([max(r['R_err'], r['t_err']) for r in exp_results])
+        p_errs[np.isnan(p_errs)] = 180
+        p_res = np.array([np.sum(p_errs < t) / len(p_errs) for t in range(1, 21)])
+
+        k_errs = [k_err(r['k1_gt'], r['k1']) for r in exp_results]
+        k_errs.extend([k_err(r['k2_gt'], r['k2']) for r in exp_results])
+        k_errs = np.array(k_errs)
+        k_errs[np.isnan(k_errs)] = 1.0
+        k_res = np.array([np.sum(k_errs < t / 100) / len(k_errs) for t in range(1, 21)])
+
+        f_errs = [f_err(r['f1_gt'], r['f1']) for r in exp_results]
+        f_errs.extend([f_err(r['f2_gt'], r['f2']) for r in exp_results])
+        f_errs = np.array(f_errs)
+        f_errs[np.isnan(f_errs)] = 1.0
+        f_res = np.array([np.sum(f_errs < t / 100) / len(f_errs) for t in range(1, 21)])
+
+        times = np.array([x['info']['runtime'] for x in exp_results])
+        inliers = np.array([x['info']['inlier_ratio'] for x in exp_results])
+
+        lo = 'kFk' if 'kFk' in exp or 'eq' in exp else 'k2Fk1'
+        lo = exp.split('_')[0] if '_ns' in exp else lo
+        exp_name = exp.replace('_', ' ') #.replace('eq','')
+
+
+        tab.add_row([exp_name, lo,
+                     np.median(p_errs), np.mean(p_res[:10]),
+                     np.median(k_errs), np.mean(k_res[:10]),
+                     np.median(f_errs), np.mean(f_res[:10]),
+                     np.median(times), np.mean(times),
+                     np.median(inliers), np.mean(inliers)])
+    print(tab)
+
+    print('latex')
+
+    print(tab.get_formatted_string('latex'))

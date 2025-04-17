@@ -12,3 +12,7 @@ basenames_pt = ['brandenburg_gate', 'buckingham_palace', 'colosseum_exterior', '
                 'sacre_coeur', 'st_peters_square', 'taj_mahal', 'temple_nara_japan', 'trevi_fountain']
 # basenames_eth = ['courtyard', 'delivery_area', 'electro', 'facade', 'kicker', 'list.py', 'meadow', 'office', 'pipes', 'playground', 'relief', 'relief_2', 'terrace', 'terrains']
 basenames_eth = ['courtyard', 'delivery_area', 'electro', 'kicker', 'meadow', 'office', 'pipes', 'playground', 'relief', 'relief_2', 'terrace', 'terrains']
+
+
+def get_pairs(file):
+    return [tuple(x.split('-'))[:2] for x in file.keys() if 'feat' not in x and 'desc' not in x and 'uneq' not in x]
