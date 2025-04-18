@@ -186,8 +186,29 @@ def eval_experiment(x):
 
 
 def geo_iter_runtime(i, eq=False):
+    # average 192.5620818418615 ms per pair for 1 LM steps
+    # average 213.2439921135996 ms per pair for 2 LM steps
+    # average 267.17575858621035 ms per pair for 5 LM steps
+    # average 350.58178153692506 ms per pair for 10 LM steps
+    # average 361.19705087998335 ms per pair for 15 LM steps
+    # average 370.29865676281497 ms per pair for 20 LM steps
+    # average 368.985559426102 ms per pair for 30 LM steps
+
     if eq:
-        return 10 * i + 80
+        if i == 1:
+            return 192.56
+        elif i == 2:
+            return 213.24
+        elif i == 5:
+            return 267.58
+        elif i == 10:
+            return 350.58
+        elif i == 15:
+            return 361.19
+        elif i == 20:
+            return 370.29
+        else:
+            return 368.98
 
     return 10 * i + 80
 
@@ -247,19 +268,7 @@ def eval(args):
 
         pairs = get_pairs(C_file)
 
-        geo_dicts = {i : {} for i in geo_iters}
-        for i in geo_iters:
-            Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_kfg_iter{i}.h5'))
-            geo_k_dict = {k.split('-')[0]: v[()] for k, v in Geo_file.items() if '-k' in k}
-            geo_f_dict = {k.split('-')[0]: np.mean(v[()]) for k, v in Geo_file.items() if '-f' in k}
-            geo_g_dict = {k.split('-')[0]: np.array(v) for k, v in Geo_file.items() if '-g' in k}
-            # scale geo dict
-            geo_k_dict = {k: v * (max(h_dict[k], w_dict[k]) / geo_f_dict[k]) ** 2 for k, v in geo_k_dict.items()}
-            geo_f_dict = {k: v / max(h_dict[k], w_dict[k]) for k, v in geo_f_dict.items()}
-
-            geo_dicts[i]['f'] = geo_f_dict
-            geo_dicts[i]['k'] = geo_k_dict
-            geo_dicts[i]['g'] = geo_g_dict
+        geo_dicts = get_geo_dicts(dataset_path, geo_iters, pairs, h_dict, w_dict, args)
 
         if args.first is not None:
             pairs = pairs[:args.first]
@@ -301,12 +310,21 @@ def eval(args):
                 net_dict = {i: {} for i in geo_iters}
 
                 for i in geo_iters:
-                    net_dict[i]['k1'] = geo_dicts[i]['k'][img_name_1]
-                    net_dict[i]['k2'] = geo_dicts[i]['k'][img_name_2]
-                    net_dict[i]['f1'] = geo_dicts[i]['f'][img_name_1]
-                    net_dict[i]['f2'] = geo_dicts[i]['f'][img_name_2]
-                    net_dict[i]['g1'] = geo_dicts[i]['g'][img_name_1]
-                    net_dict[i]['g2'] = geo_dicts[i]['g'][img_name_2]
+                    if args.eq:
+                        pair_str = f'{img_name_1}-{img_name_2}'
+                        net_dict[i]['k1'] = geo_dicts[i]['k'][f'{pair_str}-k1']
+                        net_dict[i]['k2'] = geo_dicts[i]['k'][f'{pair_str}-k2']
+                        net_dict[i]['f1'] = geo_dicts[i]['f'][f'{pair_str}-f1']
+                        net_dict[i]['f2'] = geo_dicts[i]['f'][f'{pair_str}-f2']
+                        net_dict[i]['g1'] = geo_dicts[i]['g'][f'{pair_str}-g1']
+                        net_dict[i]['g2'] = geo_dicts[i]['g'][f'{pair_str}-g2']
+                    else:
+                        net_dict[i]['k1'] = geo_dicts[i]['k'][img_name_1]
+                        net_dict[i]['k2'] = geo_dicts[i]['k'][img_name_2]
+                        net_dict[i]['f1'] = geo_dicts[i]['f'][img_name_1]
+                        net_dict[i]['f2'] = geo_dicts[i]['f'][img_name_2]
+                        net_dict[i]['g1'] = geo_dicts[i]['g'][img_name_1]
+                        net_dict[i]['g2'] = geo_dicts[i]['g'][img_name_2]
 
                 for experiment, base_runtime in zip(experiments, base_runtimes):
                     for iterations in iterations_list:
@@ -344,6 +362,55 @@ def eval(args):
     # draw_cumplots(experiments, results, eq_only=True)
 
     draw_results_pose_auc_10(results, experiments, iterations_list)
+
+
+def get_geo_dicts(dataset_path, geo_iters, pairs, h_dict, w_dict, args):
+    geo_dicts = {i: {} for i in geo_iters}
+    if args.eq:
+        for i in geo_iters:
+            Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_kfg_iter{i}_multi.h5'))
+            geo_f_dict = {}
+            geo_k_dict = {}
+            geo_g_dict = {}
+            for img_name_1, img_name_2 in pairs:
+                pair_str = f'{img_name_1}-{img_name_2}'
+                k1 = np.mean(Geo_file[f'{pair_str}-k1'][()])
+                f1 = np.mean(Geo_file[f'{pair_str}-f1'][()])
+                k2 = np.mean(Geo_file[f'{pair_str}-k2'][()])
+                f2 = np.mean(Geo_file[f'{pair_str}-f2'][()])
+
+                k1 *= (max(h_dict[img_name_1], w_dict[img_name_1]) / f1) ** 2
+                f1 /= max(h_dict[img_name_1], w_dict[img_name_1])
+
+                k2 *= (max(h_dict[img_name_2], w_dict[img_name_2]) / f2) ** 2
+                f2 /= max(h_dict[img_name_2], w_dict[img_name_2])
+
+                geo_f_dict[f'{pair_str}-f1'] = f1
+                geo_f_dict[f'{pair_str}-f2'] = f2
+                geo_k_dict[f'{pair_str}-k1'] = k1
+                geo_k_dict[f'{pair_str}-k2'] = k2
+
+                geo_g_dict[f'{pair_str}-g1'] = np.array(Geo_file[f'{pair_str}-g1'])
+                geo_g_dict[f'{pair_str}-g2'] = np.array(Geo_file[f'{pair_str}-g2'])
+
+            geo_dicts[i]['f'] = geo_f_dict
+            geo_dicts[i]['k'] = geo_k_dict
+            geo_dicts[i]['g'] = geo_g_dict
+    else:
+        for i in geo_iters:
+            Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_kfg_iter{i}.h5'))
+            geo_k_dict = {k.split('-')[0]: v[()] for k, v in Geo_file.items() if '-k' in k}
+            geo_f_dict = {k.split('-')[0]: np.mean(v[()]) for k, v in Geo_file.items() if '-f' in k}
+            geo_g_dict = {k.split('-')[0]: np.array(v) for k, v in Geo_file.items() if '-g' in k}
+            # scale geo dict
+            geo_k_dict = {k: v * (max(h_dict[k], w_dict[k]) / geo_f_dict[k]) ** 2 for k, v in geo_k_dict.items()}
+            geo_f_dict = {k: v / max(h_dict[k], w_dict[k]) for k, v in geo_f_dict.items()}
+
+            geo_dicts[i]['f'] = geo_f_dict
+            geo_dicts[i]['k'] = geo_k_dict
+            geo_dicts[i]['g'] = geo_g_dict
+
+    return geo_dicts
 
 
 if __name__ == '__main__':
