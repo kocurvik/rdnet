@@ -115,6 +115,7 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None):
     plt.tick_params(axis='x', which='major', labelsize=small_size)
     plt.tick_params(axis='y', which='major', labelsize=small_size)
     if title is not None:
+        plt.title(title)
         # plt.legend()
         plt.savefig(f'figs/{title}_pose.pdf')#, bbox_inches='tight', pad_inches=0)
         print(f'saved pose: {title}')
@@ -166,6 +167,7 @@ def draw_results_k_med(results, experiments, iterations_list, title=None):
     plt.tick_params(axis='x', which='major', labelsize=small_size)
     plt.tick_params(axis='y', which='major', labelsize=small_size)
     if title is not None:
+        plt.title(title)
         # plt.legend()
         plt.savefig(f'figs/{title}_k.pdf', bbox_inches='tight', pad_inches=0)
         print(f'saved k: {title}')
@@ -215,6 +217,7 @@ def draw_results_f_med(results, experiments, iterations_list, title=None):
     plt.tick_params(axis='y', which='major', labelsize=small_size)
     if title is not None:
         # plt.legend()
+        plt.title(title)
         plt.savefig(f'figs/{title}_f.pdf', bbox_inches='tight', pad_inches=0)
         print(f'saved k: {title}')
 
