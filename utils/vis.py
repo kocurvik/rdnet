@@ -41,14 +41,54 @@ def get_color_style(experiment, experiments):
 # })
 font = {}
 
+
+def find_boundary(x_values, y_values, lowest_y=True):
+    xs = np.array(x_values)
+    ys = np.array(y_values)
+
+    new_ys = np.empty_like(ys)
+
+    for i in range(len(xs)):
+        if lowest_y:
+            new_ys[i] = np.min(ys[xs <= xs[i]])
+        else:
+            new_ys[i] = np.max(ys[xs <= xs[i]])
+
+    new_ys = new_ys[xs.argsort()]
+    xs = xs[xs.argsort()]
+
+    return xs.tolist(), new_ys.tolist()
+
+def process_curves(d, experiments, use_lowest=True):
+    new_d = {exp: d[exp] for exp in experiments if '+' not in exp}
+    net_experiments = [exp for exp in experiments if '+' in exp]
+
+    base_exp_names = sorted(list({item[:item.rindex('_')] if '_' in item else item for item in net_experiments}))
+    lm_iters = sorted(list({item[item.rindex('_') + 1:] if '_' in item else "" for item in net_experiments}))
+
+    for net_exp in base_exp_names:
+        xs = []
+        ys = []
+        for i in lm_iters:
+            xs.extend(d[f'{net_exp}_{i}']['xs'])
+            ys.extend(d[f'{net_exp}_{i}']['ys'])
+
+        new_xs, new_ys = find_boundary(xs, ys, lowest_y=use_lowest)
+
+        new_d[net_exp] = {'xs': new_xs, 'ys': new_ys}
+
+    return new_d
+
+
 def draw_results_pose_auc_10(results, experiments, iterations_list, title=None):
     plt.figure(frameon=True)
+
+    d = {}
 
     for experiment in experiments:
         experiment_results = [x for x in results if x['experiment'] == experiment]
 
-        xs = []
-        ys = []
+        d[experiment] = {'xs': [], 'ys': []}
 
         for iterations in iterations_list:
             iter_results = [x for x in experiment_results if x['info']['iterations'] == iterations]
@@ -57,11 +97,17 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None):
             errs[np.isnan(errs)] = 180
             AUC10 = np.mean(np.array([np.sum(errs < t) / len(errs) for t in range(1, 11)]))
 
-            xs.append(mean_runtime)
-            ys.append(AUC10)
+            d[experiment]['xs'].append(mean_runtime)
+            d[experiment]['ys'].append(AUC10)
 
+        # color, style = get_color_style(experiment, experiments)
+        # plt.semilogx(xs, ys, label=experiment, marker='*', color=color, linestyle=style)
+
+    d = process_curves(d, experiments, use_lowest=False)
+
+    for experiment, vals in d.items():
         color, style = get_color_style(experiment, experiments)
-        plt.semilogx(xs, ys, label=experiment, marker='*', color=color, linestyle=style)
+        plt.semilogx(vals['xs'], vals['ys'], label=experiment, marker='*', color=color, linestyle=style)
 
     # plt.xlim([5.0, 1.9e4])
     plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
@@ -86,11 +132,12 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None):
 def draw_results_k_med(results, experiments, iterations_list, title=None):
     plt.figure(frameon=True)
 
+    d = {}
+
     for experiment in experiments:
         experiment_results = [x for x in results if x['experiment'] == experiment]
 
-        xs = []
-        ys = []
+        d[experiment] = {'xs': [], 'ys': []}
 
         for iterations in iterations_list:
             iter_results = [x for x in experiment_results if x['info']['iterations'] == iterations]
@@ -101,17 +148,20 @@ def draw_results_k_med(results, experiments, iterations_list, title=None):
             errs[np.isnan(errs)] = 2.0
             med = np.median(errs)
 
-            xs.append(mean_runtime)
-            ys.append(med)
+            d[experiment]['xs'].append(mean_runtime)
+            d[experiment]['ys'].append(med)
 
+    d = process_curves(d, experiments, use_lowest=True)
+
+    for experiment, vals in d.items():
         color, style = get_color_style(experiment, experiments)
-        plt.semilogx(xs, ys, label=experiment, marker='*', color=color, linestyle=style)
+        plt.semilogx(vals['xs'], vals['ys'], label=experiment, marker='*', color=color, linestyle=style)
 
     plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
     # plt.ylabel('Median absolute $\\lambda$ error', fontsize=large_size)
     # plt.ylabel('Mean $\\epsilon(\\lambda)$', fontsize=large_size, **font)
     plt.ylabel('Median ε(λ)', fontsize=large_size, **font)
-    # plt.ylim([0.0, 0.8])
+    plt.ylim([0.0, 0.5])
     # plt.xlim([5.0, 1.9e4])
     plt.tick_params(axis='x', which='major', labelsize=small_size)
     plt.tick_params(axis='y', which='major', labelsize=small_size)
@@ -130,11 +180,12 @@ def draw_results_k_med(results, experiments, iterations_list, title=None):
 def draw_results_f_med(results, experiments, iterations_list, title=None):
     plt.figure(frameon=True)
 
+    d = {}
+
     for experiment in experiments:
         experiment_results = [x for x in results if x['experiment'] == experiment]
 
-        xs = []
-        ys = []
+        d[experiment] = {'xs': [], 'ys': []}
 
         for iterations in iterations_list:
             iter_results = [x for x in experiment_results if x['info']['iterations'] == iterations]
@@ -145,17 +196,20 @@ def draw_results_f_med(results, experiments, iterations_list, title=None):
             errs[np.isnan(errs)] = 2.0
             med = np.median(errs)
 
-            xs.append(mean_runtime)
-            ys.append(med)
+            d[experiment]['xs'].append(mean_runtime)
+            d[experiment]['ys'].append(med)
 
+    d = process_curves(d, experiments, use_lowest=True)
+
+    for experiment, vals in d.items():
         color, style = get_color_style(experiment, experiments)
-        plt.semilogx(xs, ys, label=experiment, marker='*', color=color, linestyle=style)
+        plt.semilogx(vals['xs'], vals['ys'], label=experiment, marker='*', color=color, linestyle=style)
 
     plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
     # plt.ylabel('Median absolute $\\lambda$ error', fontsize=large_size)
     # plt.ylabel('Mean $\\epsilon(\\lambda)$', fontsize=large_size, **font)
     plt.ylabel('Median ξ(f)', fontsize=large_size, **font)
-    # plt.ylim([0.0, 0.8])
+    plt.ylim([0.0, 0.5])
     # plt.xlim([5.0, 1.9e4])
     plt.tick_params(axis='x', which='major', labelsize=small_size)
     plt.tick_params(axis='y', which='major', labelsize=small_size)
@@ -185,7 +239,7 @@ def draw_graphs(name):
 
 
 if __name__ == '__main__':
-    draw_graphs('focal-graph-st_vitus_all-pairs-features_superpoint_noresize_2048-LG')
-    # draw_graphs('st_vitus_all-focal-graph-pairs-features_superpoint_noresize_2048-LG')
-    draw_graphs('rotunda_new-graph-pairs-features_superpoint_noresize_2048-LG_eq')
+    draw_graphs('focal-graph-cathedral_all-pairs-features_superpoint_noresize_2048-LG')
+    draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG_eq')
     draw_graphs('rotunda_new-graph-pairs-features_superpoint_noresize_2048-LG')
+    draw_graphs('rotunda_new-graph-pairs-features_superpoint_noresize_2048-LG_eq')
