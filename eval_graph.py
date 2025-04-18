@@ -226,6 +226,12 @@ def eval(args):
         base_runtimes.extend([geo_iter_runtime(i, eq=True) for i in geo_iters])
         experiments.extend([f'E_3pt+Geo_VLO_{i}' for i in geo_iters])
         base_runtimes.extend([geo_iter_runtime(i, eq=True) for i in geo_iters])
+        experiments.extend([f'Efeq_6pt+Geo_V_{i}' for i in geo_iters])
+        base_runtimes.extend([geo_iter_runtime(i, eq=True) for i in geo_iters])
+        experiments.extend([f'E_5pt+Geo_V_{i}' for i in geo_iters])
+        base_runtimes.extend([geo_iter_runtime(i, eq=True) for i in geo_iters])
+        experiments.extend([f'E_3pt+Geo_V_{i}' for i in geo_iters])
+        base_runtimes.extend([geo_iter_runtime(i, eq=True) for i in geo_iters])
     else:
         experiments = ['F_7pt', 'F_7pt_s3', 'k2Fk1_10pt']
         base_runtimes.extend([0, 0, 0])
