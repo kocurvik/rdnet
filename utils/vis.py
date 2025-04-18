@@ -244,5 +244,5 @@ def draw_graphs(name):
 if __name__ == '__main__':
     draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG')
     draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG_eq')
-    draw_graphs('rotunda_new-graph-pairs-features_superpoint_noresize_2048-LG')
-    draw_graphs('rotunda_new-graph-pairs-features_superpoint_noresize_2048-LG_eq')
+    draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG')
+    draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG_eq')
