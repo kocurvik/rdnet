@@ -24,6 +24,7 @@ def parse_args():
     parser.add_argument('-t', '--threshold', type=float, default=3.0)
     parser.add_argument('-e', '--eq', action='store_true', default=False)
     parser.add_argument('-a', '--append', action='store_true', default=False)
+    parser.add_argument('--fix', action='store_true', default=False)
     parser.add_argument('feature_file')
     parser.add_argument('dataset_path')
 
@@ -243,6 +244,9 @@ def eval(args):
         base_runtimes.extend([geo_iter_runtime(i) for i in geo_iters])
         experiments.extend([f'E_3pt+Geo_V_{i}' for i in geo_iters])
         base_runtimes.extend([geo_iter_runtime(i) for i in geo_iters])
+
+    if args.fix:
+        experiments = ['kFk_9pt']
 
     dataset_path = args.dataset_path
     basename = os.path.basename(dataset_path)
