@@ -42,7 +42,7 @@ def get_color_style(experiment, experiments):
 font = {}
 
 def draw_results_pose_auc_10(results, experiments, iterations_list, title=None):
-    plt.figure(frameon=False)
+    plt.figure(frameon=True)
 
     for experiment in experiments:
         experiment_results = [x for x in results if x['experiment'] == experiment]
@@ -70,12 +70,12 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None):
     plt.tick_params(axis='y', which='major', labelsize=small_size)
     if title is not None:
         # plt.legend()
-        plt.savefig(f'figs/{title}_pose.pdf', bbox_inches='tight', pad_inches=0)
+        plt.savefig(f'figs/{title}_pose.pdf')#, bbox_inches='tight', pad_inches=0)
         print(f'saved pose: {title}')
 
-        plt.legend()
-        plt.show()
-        plt.savefig(f'figs/{title}_pose.png')
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        # plt.show()
+        plt.savefig(f'figs/{title}_pose.png', bbox_inches='tight', pad_inches=0)
         print(f'saved pose: {title}')
 
     else:
@@ -84,7 +84,7 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None):
 
 
 def draw_results_k_med(results, experiments, iterations_list, title=None):
-    plt.figure(frameon=False)
+    plt.figure(frameon=True)
 
     for experiment in experiments:
         experiment_results = [x for x in results if x['experiment'] == experiment]
@@ -120,8 +120,52 @@ def draw_results_k_med(results, experiments, iterations_list, title=None):
         plt.savefig(f'figs/{title}_k.pdf', bbox_inches='tight', pad_inches=0)
         print(f'saved k: {title}')
 
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.savefig(f'figs/{title}_k.png', bbox_inches='tight', pad_inches=0)
+    else:
         plt.legend()
-        plt.savefig(f'figs/{title}_k.png')
+        plt.show()
+
+
+def draw_results_f_med(results, experiments, iterations_list, title=None):
+    plt.figure(frameon=True)
+
+    for experiment in experiments:
+        experiment_results = [x for x in results if x['experiment'] == experiment]
+
+        xs = []
+        ys = []
+
+        for iterations in iterations_list:
+            iter_results = [x for x in experiment_results if x['info']['iterations'] == iterations]
+            mean_runtime = np.mean([x['info']['runtime'] for x in iter_results])
+            errs = np.array([0.5 * (np.abs(r['f1'] - r['f1_gt'])/r['f1_gt'] + np.abs(r['f2'] - r['f2_gt'])/r['f2_gt']) for r in iter_results])
+            # errs.extend([np.abs(r['k2'] - r['k2_gt']) for r in iter_results])
+            # errs = np.array(errs)
+            errs[np.isnan(errs)] = 2.0
+            med = np.median(errs)
+
+            xs.append(mean_runtime)
+            ys.append(med)
+
+        color, style = get_color_style(experiment, experiments)
+        plt.semilogx(xs, ys, label=experiment, marker='*', color=color, linestyle=style)
+
+    plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
+    # plt.ylabel('Median absolute $\\lambda$ error', fontsize=large_size)
+    # plt.ylabel('Mean $\\epsilon(\\lambda)$', fontsize=large_size, **font)
+    plt.ylabel('Median ξ(f)', fontsize=large_size, **font)
+    # plt.ylim([0.0, 0.8])
+    # plt.xlim([5.0, 1.9e4])
+    plt.tick_params(axis='x', which='major', labelsize=small_size)
+    plt.tick_params(axis='y', which='major', labelsize=small_size)
+    if title is not None:
+        # plt.legend()
+        plt.savefig(f'figs/{title}_f.pdf', bbox_inches='tight', pad_inches=0)
+        print(f'saved k: {title}')
+
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.savefig(f'figs/{title}_f.png', bbox_inches='tight', pad_inches=0)
     else:
         plt.legend()
         plt.show()
@@ -131,10 +175,11 @@ def draw_graphs(name):
     with open(os.path.join('results', f'{name}.json'), 'r') as f:
         results = json.load(f)
 
-    experiments = list(set([x['experiment'] for x in results]))
+    experiments = sorted(list(set([x['experiment'] for x in results])))
 
     draw_results_pose_auc_10(results, experiments, iterations_list, title=name)
     draw_results_k_med(results, experiments, iterations_list, title=name)
+    draw_results_f_med(results, experiments, iterations_list, title=name)
 
 
 
@@ -142,5 +187,5 @@ def draw_graphs(name):
 if __name__ == '__main__':
     draw_graphs('focal-graph-st_vitus_all-pairs-features_superpoint_noresize_2048-LG')
     # draw_graphs('st_vitus_all-focal-graph-pairs-features_superpoint_noresize_2048-LG')
-    # draw_graphs('rotunda_new-graph-pairs-features_superpoint_noresize_2048-LG_eq')
-    # draw_graphs('rotunda_new-graph-pairs-features_superpoint_noresize_2048-LG')
+    draw_graphs('rotunda_new-graph-pairs-features_superpoint_noresize_2048-LG_eq')
+    draw_graphs('rotunda_new-graph-pairs-features_superpoint_noresize_2048-LG')
