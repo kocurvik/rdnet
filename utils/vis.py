@@ -252,7 +252,7 @@ def draw_results_f_med(results, experiments, iterations_list, title=None, d=None
 
 def get_experiments(eq, geo_iters=(1,2,5,30)):
     if eq:
-        experiments = ['Efeq_6pt', 'Efeq_6pt_s3', 'kFk_9pt']
+        experiments = ['Efeq_6pt_s3', 'kFk_9pt']
         experiments.extend([f'Efeq_6pt+Geo_VLO_{i}' for i in geo_iters])
         experiments.extend([f'E_5pt+Geo_VLO_{i}' for i in geo_iters])
         experiments.extend([f'E_3pt+Geo_VLO_{i}' for i in geo_iters])
@@ -260,7 +260,7 @@ def get_experiments(eq, geo_iters=(1,2,5,30)):
         experiments.extend([f'E_5pt+Geo_V_{i}' for i in geo_iters])
         experiments.extend([f'E_3pt+Geo_V_{i}' for i in geo_iters])
     else:
-        experiments = ['F_7pt', 'F_7pt_s3', 'k2Fk1_10pt']
+        experiments = ['F_7pt_s3', 'k2Fk1_10pt']
         experiments.extend([f'E_5pt+Geo_VLO_{i}' for i in geo_iters])
         experiments.extend([f'E_5pt+Geo_V_{i}' for i in geo_iters])
         experiments.extend([f'E_3pt+Geo_VLO_{i}' for i in geo_iters])
