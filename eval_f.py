@@ -270,7 +270,7 @@ def eval(args):
         w_dict = {k.split('-')[0]: v[0, 0] for k, v in P_file.items()}
         h_dict = {k.split('-')[0]: v[1, 1] for k, v in P_file.items()}
 
-        if args.synth:
+        if args.synth and not 'pragueparks' in dataset_path:
             w_dict = {k: v // 4 for k, v in w_dict.items()}
             h_dict = {k: v // 4 for k, v in h_dict.items()}
 

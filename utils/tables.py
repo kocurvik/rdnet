@@ -20,7 +20,10 @@ neq_order = ['k2k1_9pt', 'k2Fk1_10pt',
 incdec = [1, 1, -1, 1, 1, 1, 1, 1]
 
 def table_text(dataset_name, eq_rows, neq_rows, sarg):
-    leq = len(eq_rows)
+    if eq_rows is None:
+        leq = 0
+    else:
+        leq = len(eq_rows)
     lneq = len(neq_rows)
 
     rd_val = '0'
@@ -43,28 +46,33 @@ def table_text(dataset_name, eq_rows, neq_rows, sarg):
         f'\\begin{{tabular}}{{ c | r c c | c c c | c c | c c | c}}\n'
         f'    \\toprule\n'
         f'    & & & & \\multicolumn{{7}}{{c}}{{Poselib - {dataset_name}}} \\\\\n'
-        f'    \\midrule\n'
-        f'    & Minimal & Refinement & Sample & AVG $(^\\circ)$ $\\downarrow$ & MED $(^\\circ)$ $\\downarrow$ & AUC@10 $\\uparrow$ & AVG $\\epsilon(\\lambda)$ $\\downarrow$ & MED $\\epsilon(\\lambda)$ $\\downarrow$  & AVG $\\xi(f)$ $\\downarrow$ & MED $\\xi(f)$ $\\downarrow$ & Time (ms) $\\downarrow$ \\\\\n'
-        f'    \\midrule\n'
-        f'    \\multirow{{{leq}}}{{*}}{{\\rotatebox[origin=c]{{90}}{{$\\lambda_1 = \\lambda_2$}}}} '
-        f'    & 9pt \\Fkk & $\\R,\\tvec,f,\\lambda$ & \\ding{{55}} & {eq_rows[0]} \\\\\n'
-        f'    & 10pt \\Fkk & $\\R,\\tvec,f,\\lambda$ & \\ding{{55}} & {eq_rows[1]} \\\\\n'
-        f'    & 8pt \\Fk & $\\R,\\tvec,f,\\lambda$ & \\ding{{55}} & {eq_rows[2]} \\\\\n'
-        f'    & 9pt \\Fk & $\\R,\\tvec,f,\\lambda$ & \\ding{{55}} & {eq_rows[3]} \\\\\n'        
-        f'    & 7pt \\F & $\\R,\\tvec,f$ & $\\lambda$ = 0 & {eq_rows[4]} \\\\\n'
-        f'    & 7pt \\F & $\\R,\\tvec,f,\\lambda$ & $\\lambda = {rd_val}$ & {eq_rows[5]} \\\\\n'
-        f'    {comment}& 7pt \\F & $\\R,\\tvec,f,\\lambda$ & $\\lambda \\in \\{{{rd_vals}\\}}$ & {eq_rows[6]} \\\\\n'
-        f'    & 6pt \\Ef & $\\R,\\tvec,f,\\lambda$ & $\\lambda = {rd_val}$ & {eq_rows[7]} \\\\\n'
-        f'    {comment}& 6pt \\Ef & $\\R,\\tvec,f,\\lambda$ & $\\lambda \\in \\{{{rd_vals}\\}}$ & {eq_rows[8]} \\\\\n'
-        f'    & 7pt \\F & $\\R,\\tvec,f$ & GeoCalib - $\\lambda$ & {eq_rows[9]} \\\\\n'
-        f'    & 7pt \\F & $\\R,\\tvec,f,\\lambda$ &  GeoCalib - $\\lambda$ & {eq_rows[10]} \\\\\n'
-        f'    & 6pt \\Ef & $\\R,\\tvec,f$ & GeoCalib - $\\lambda$ & {eq_rows[11]} \\\\\n'
-        f'    & 6pt \\Ef & $\\R,\\tvec,f,\\lambda$ & GeoCalib - $\\lambda$ & {eq_rows[12]} \\\\\n'
-        f'    & 5pt \\E & $\\R, \\tvec$ & GeoCalib - $\\lambda,f$ & {eq_rows[13]} \\\\\n'
-        f'    & 5pt \\E & $\\R,\\tvec,f,\\lambda$ & GeoCalib - $\\lambda,f$ & {eq_rows[14]} \\\\\n'
-        f'    & 3pt \\E & $\\R,\\tvec$ & GeoCalib - $\\lambda,f,\\g$ & {eq_rows[15]} \\\\\n'
-        f'    & 3pt \\E & $\\R,\\tvec,f,\\lambda$ & GeoCalib - $\\lambda,f,\\g$ & {eq_rows[16]} \\\\\n'
+        f'    \\midrule\n')
 
+    if eq_rows is not None:
+        table_f_string += (
+            f'    & Minimal & Refinement & Sample & AVG $(^\\circ)$ $\\downarrow$ & MED $(^\\circ)$ $\\downarrow$ & AUC@10 $\\uparrow$ & AVG $\\epsilon(\\lambda)$ $\\downarrow$ & MED $\\epsilon(\\lambda)$ $\\downarrow$  & AVG $\\xi(f)$ $\\downarrow$ & MED $\\xi(f)$ $\\downarrow$ & Time (ms) $\\downarrow$ \\\\\n'
+            f'    \\midrule\n'
+            f'    \\multirow{{{leq}}}{{*}}{{\\rotatebox[origin=c]{{90}}{{$\\lambda_1 = \\lambda_2$}}}} '
+            f'    & 9pt \\Fkk & $\\R,\\tvec,f,\\lambda$ & \\ding{{55}} & {eq_rows[0]} \\\\\n'
+            f'    & 10pt \\Fkk & $\\R,\\tvec,f,\\lambda$ & \\ding{{55}} & {eq_rows[1]} \\\\\n'
+            f'    & 8pt \\Fk & $\\R,\\tvec,f,\\lambda$ & \\ding{{55}} & {eq_rows[2]} \\\\\n'
+            f'    & 9pt \\Fk & $\\R,\\tvec,f,\\lambda$ & \\ding{{55}} & {eq_rows[3]} \\\\\n'        
+            f'    & 7pt \\F & $\\R,\\tvec,f$ & $\\lambda$ = 0 & {eq_rows[4]} \\\\\n'
+            f'    & 7pt \\F & $\\R,\\tvec,f,\\lambda$ & $\\lambda = {rd_val}$ & {eq_rows[5]} \\\\\n'
+            f'    {comment}& 7pt \\F & $\\R,\\tvec,f,\\lambda$ & $\\lambda \\in \\{{{rd_vals}\\}}$ & {eq_rows[6]} \\\\\n'
+            f'    & 6pt \\Ef & $\\R,\\tvec,f,\\lambda$ & $\\lambda = {rd_val}$ & {eq_rows[7]} \\\\\n'
+            f'    {comment}& 6pt \\Ef & $\\R,\\tvec,f,\\lambda$ & $\\lambda \\in \\{{{rd_vals}\\}}$ & {eq_rows[8]} \\\\\n'
+            f'    & 7pt \\F & $\\R,\\tvec,f$ & GeoCalib - $\\lambda$ & {eq_rows[9]} \\\\\n'
+            f'    & 7pt \\F & $\\R,\\tvec,f,\\lambda$ &  GeoCalib - $\\lambda$ & {eq_rows[10]} \\\\\n'
+            f'    & 6pt \\Ef & $\\R,\\tvec,f$ & GeoCalib - $\\lambda$ & {eq_rows[11]} \\\\\n'
+            f'    & 6pt \\Ef & $\\R,\\tvec,f,\\lambda$ & GeoCalib - $\\lambda$ & {eq_rows[12]} \\\\\n'
+            f'    & 5pt \\E & $\\R, \\tvec$ & GeoCalib - $\\lambda,f$ & {eq_rows[13]} \\\\\n'
+            f'    & 5pt \\E & $\\R,\\tvec,f,\\lambda$ & GeoCalib - $\\lambda,f$ & {eq_rows[14]} \\\\\n'
+            f'    & 3pt \\E & $\\R,\\tvec$ & GeoCalib - $\\lambda,f,\\g$ & {eq_rows[15]} \\\\\n'
+            f'    & 3pt \\E & $\\R,\\tvec,f,\\lambda$ & GeoCalib - $\\lambda,f,\\g$ & {eq_rows[16]} \\\\\n'
+        )
+
+    table_f_string += (
         f'    \\midrule\n'
         f'    \\midrule\n'
         f'    \\multirow{{{lneq}}}{{*}}{{\\rotatebox[origin=c]{{90}}{{$\\lambda_1 \\neq \\lambda_2$}}}} '
@@ -85,9 +93,7 @@ def table_text(dataset_name, eq_rows, neq_rows, sarg):
     return table_f_string
 
 
-
-
-def get_rows(results, order, synth=False):
+def get_rows(results, order, div_by_4=False):
     num_rows = []
 
     for experiment in order:
@@ -106,7 +112,7 @@ def get_rows(results, order, synth=False):
         k_avg = np.mean(k_errs)
         k_med = np.median(k_errs)
 
-        if synth:
+        if div_by_4:
             f_errs = np.array([0.5 * (np.abs(4 * r['f1'] - r['f1_gt'])/r['f1_gt'] + np.abs(4 * r['f2'] - r['f2_gt'])/r['f2_gt']) for r in exp_results])
         else:
             f_errs = np.array(
@@ -140,7 +146,7 @@ def get_rows(results, order, synth=False):
 
     return [' & '.join(row) for row in text_rows]
 
-def generate_table(dataset, i, feat):
+def generate_table(dataset, i, feat, neq_only=False):
     if dataset == 'pt':
         basenames = basenames_pt
         name = '\\Phototourism'
@@ -153,6 +159,8 @@ def generate_table(dataset, i, feat):
     elif dataset == 'cathedral':
         basenames = ['cathedral']
         name = '\\CATHEDRAL'
+    elif dataset == 'pragueparks':
+        basenames = ['pond', 'lizard', 'tree_new']
 
     else:
         raise ValueError
@@ -161,9 +169,13 @@ def generate_table(dataset, i, feat):
         synth_char = "XABC"[i]
         name = name + f' - Synth {synth_char}'
 
-    if i > 0:
+    if i > 0 and dataset == 'pt':
         neq_results_type = f'synth{synth_char}-uneq-final-pairs-features_{feat}_noresize_2048-LG-synth{i}'
         eq_results_type = f'synth{synth_char}-eq-final-pairs-features_{feat}_noresize_2048-LG-syntheq{i}'
+    elif i > 0 and dataset == 'pragueparks':
+        neq_results_type = f'synth{synth_char}-uneq-pairs-features_{feat}_noresize_2048-LG-synth{i}'
+        # eq_results_type = f'synth{synth_char}-eq-pairs-features_{feat}_noresize_2048-LG-syntheq{i}'
+        eq_results_type = None
     else:
         neq_results_type = f'pairs-features_{feat}_noresize_2048-LG'
         eq_results_type = f'pairs-features_{feat}_noresize_2048-LG_eq'
@@ -177,10 +189,12 @@ def generate_table(dataset, i, feat):
         print(f'json_path: {json_path}')
         with open(json_path, 'r') as f:
             neq_results.extend(json.load(f))
-        json_path = os.path.join('results', f'focal-{basename}-{eq_results_type}.json')
-        print(f'json_path: {json_path}')
-        with open(json_path, 'r') as f:
-            eq_results.extend(json.load(f))
+
+        if not neq_only:
+            json_path = os.path.join('results', f'focal-{basename}-{eq_results_type}.json')
+            print(f'json_path: {json_path}')
+            with open(json_path, 'r') as f:
+                eq_results.extend(json.load(f))
 
     print("Data loaded")
 
@@ -190,19 +204,12 @@ def generate_table(dataset, i, feat):
     print("Printing: ", name)
     print(30 * '*')
 
-    neq_rows = get_rows(neq_results, neq_order, synth=i > 0)
-    eq_rows = get_rows(eq_results, eq_order, synth=i > 0)
+    neq_rows = get_rows(neq_results, neq_order, div_by_4=(i > 0) and 'pragueparks' != dataset)
+    if not neq_only:
+        eq_rows = get_rows(eq_results, eq_order, div_by_4=(i > 0) and 'pragueparks' != dataset)
+    else:
+        eq_rows = None
     print(table_text(name, eq_rows, neq_rows, i))
-
-if __name__ == '__main__':
-    for features in ['superpoint']:
-        generate_table('rotunda', 0, features)
-        generate_table('cathedral', 0, features)
-
-    # for i in range(1, 4):
-    #     generate_table('pt', i, 'superpoint')
-    for i in range(1, 4):
-        generate_table('eth3d', i, 'superpoint')
 
 
 def print_results(experiments, results, eq_only=False):
@@ -257,3 +264,17 @@ def print_results(experiments, results, eq_only=False):
     print('latex')
 
     print(tab.get_formatted_string('latex'))
+
+
+if __name__ == '__main__':
+    for features in ['superpoint']:
+        generate_table('rotunda', 0, features)
+        generate_table('cathedral', 0, features)
+
+    # for i in range(1, 4):
+    #     generate_table('pt', i, 'superpoint')
+    for i in range(1, 4):
+        generate_table('eth3d', i, 'superpoint')
+
+    for i in range(1, 4):
+        generate_table('pragueparks', i, 'superpoint', neq_only=True)
