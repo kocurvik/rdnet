@@ -190,7 +190,10 @@ def eval(args):
         assert synth_string in args.feature_file
         eq_string = 'eq' if args.eq else 'uneq'
         feq_string = 'eq' if args.eq else 'uneq-final'
-        S_file = h5py.File(os.path.join(args.dataset_path, f'{synth_string}-{feq_string}-distortion.h5'))
+        if 'pragueparks' in args.dataset_path:
+            S_file = h5py.File(os.path.join(args.dataset_path, f'{synth_string}-{eq_string}-parameters_rd.h5'))
+        else:
+            S_file = h5py.File(os.path.join(args.dataset_path, f'{synth_string}-{feq_string}-distortion.h5'))
 
     experiments = ['k2k1_9pt', 'k2Fk1_10pt', 'F_7pt', 'F_7pt_ns']
 
@@ -242,13 +245,20 @@ def eval(args):
     else:
         R_file = h5py.File(os.path.join(dataset_path, 'R.h5'))
         T_file = h5py.File(os.path.join(dataset_path, 'T.h5'))
-        P_file = h5py.File(os.path.join(dataset_path, 'parameters_rd.h5'))
+        if 'pragueparks' in args.dataset_path:
+            P_file = h5py.File(os.path.join(args.dataset_path, f'{synth_string}-{eq_string}-parameters_rd.h5'))
+        else:
+            P_file = h5py.File(os.path.join(dataset_path, 'parameters_rd.h5'))
         C_file = h5py.File(os.path.join(dataset_path, f'{args.feature_file}.h5'))
         if args.synth:
-            if args.eq:
-                Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_{synth_char}-{eq_string}-final-multi.h5'))
+            if 'pragueparks' in args.dataset_path:
+                Geo_file = h5py.File(
+                    os.path.join(dataset_path, f'GeoCalibPredictions_{synth_char}-{eq_string}.h5'))
             else:
-                Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_{synth_char}-{eq_string}-final.h5'))
+                if args.eq:
+                    Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_{synth_char}-{eq_string}-final-multi.h5'))
+                else:
+                    Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_{synth_char}-{eq_string}-final.h5'))
         else:
             if args.eq:
                 Geo_file = h5py.File(os.path.join(dataset_path, 'GeoCalibPredictions_kfg_multi2.h5'))
@@ -269,7 +279,7 @@ def eval(args):
 
         pairs = get_pairs(C_file)
 
-        if args.synth or args.eq:
+        if (args.synth or args.eq) and 'pragueparks' not in args.dataset_path:
             geo_k_dict = {}
             geo_f_dict = {}
             geo_g_dict = {}
@@ -343,7 +353,7 @@ def eval(args):
                 kp1_distorted, T1 = normalize(kp1, w_dict[img_name_1], h_dict[img_name_1])
                 kp2_distorted, T2 = normalize(kp2, w_dict[img_name_2], h_dict[img_name_2])
 
-                if args.synth:
+                if args.synth and 'pragueparks' not in args.dataset_path:
                     if args.eq:
                         k1 = S_file[f'{img_name_1}-{img_name_2}'][()]
                         k2 = k1
@@ -354,7 +364,7 @@ def eval(args):
                     k1 = k_dict[img_name_1]
                     k2 = k_dict[img_name_2]
 
-                if args.synth or args.eq:
+                if (args.synth or args.eq) and 'pragueparks' not in dataset_path:
                     net_dict = {'Geo_k1': geo_k_dict[f'{img_name_1}-{img_name_2}-k1'],
                                 'Geo_k2': geo_k_dict[f'{img_name_1}-{img_name_2}-k2'],
                                 'Geo_f1': geo_f_dict[f'{img_name_1}-{img_name_2}-f1'],
