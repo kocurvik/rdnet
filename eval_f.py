@@ -308,15 +308,21 @@ def eval(args):
 
         def gen_data():
             for img_name_1, img_name_2 in pairs:
-                R1 = R_dict[img_name_1]
-                t1 = t_dict[img_name_1]
-                R2 = R_dict[img_name_2]
-                t2 = t_dict[img_name_2]
+                if 'Euroc' in args.dataset_path:
+                    R_gt = R_dict[f'{img_name_1}-{img_name_2}']
+                    t_gt = t_dict[f'{img_name_1}-{img_name_2}']
+                else:
+                    R1 = R_dict[img_name_1]
+                    t1 = t_dict[img_name_1]
+                    R2 = R_dict[img_name_2]
+                    t2 = t_dict[img_name_2]
+                    R_gt = np.dot(R2, R1.T)
+                    t_gt = t2 - np.dot(R_gt, t1)
+
                 K1 = camera_dicts[img_name_1]
                 K2 = camera_dicts[img_name_2]
 
-                R_gt = np.dot(R2, R1.T)
-                t_gt = t2 - np.dot(R_gt, t1)
+
 
                 if args.synth:
                     if args.eq:
