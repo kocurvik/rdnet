@@ -88,30 +88,35 @@ def process_curves(d, experiments, use_lowest=True):
     return new_d
 
 
-def draw_results_pose_auc_10(results, experiments, iterations_list, title=None):
+def draw_results_pose_auc_10(results, experiments, iterations_list, title=None, d=None):
     plt.figure(frameon=True)
 
-    d = {}
+    if d is None:
+        d = {}
 
-    for experiment in experiments:
-        experiment_results = [x for x in results if x['experiment'] == experiment]
+        for experiment in experiments:
+            experiment_results = [x for x in results if x['experiment'] == experiment]
 
-        d[experiment] = {'xs': [], 'ys': []}
+            d[experiment] = {'xs': [], 'ys': []}
 
-        for iterations in iterations_list:
-            iter_results = [x for x in experiment_results if x['info']['iterations'] == iterations]
-            mean_runtime = np.mean([x['info']['runtime'] for x in iter_results])
-            errs = np.array([r['P_err'] for r in iter_results])
-            errs[np.isnan(errs)] = 180
-            AUC10 = np.mean(np.array([np.sum(errs < t) / len(errs) for t in range(1, 11)]))
+            for iterations in iterations_list:
+                iter_results = [x for x in experiment_results if x['info']['iterations'] == iterations]
+                mean_runtime = np.mean([x['info']['runtime'] for x in iter_results])
+                errs = np.array([r['P_err'] for r in iter_results])
+                errs[np.isnan(errs)] = 180
+                AUC10 = np.mean(np.array([np.sum(errs < t) / len(errs) for t in range(1, 11)]))
 
-            d[experiment]['xs'].append(mean_runtime)
-            d[experiment]['ys'].append(AUC10)
+                d[experiment]['xs'].append(mean_runtime)
+                d[experiment]['ys'].append(AUC10)
 
-        # color, style = get_color_style(experiment, experiments)
-        # plt.semilogx(xs, ys, label=experiment, marker='*', color=color, linestyle=style)
+            # color, style = get_color_style(experiment, experiments)
+            # plt.semilogx(xs, ys, label=experiment, marker='*', color=color, linestyle=style)
 
-    d = process_curves(d, experiments, use_lowest=False)
+        d = process_curves(d, experiments, use_lowest=False)
+
+        if title is not None:
+            with open(f'fig_data/{title}_pose.json') as f:
+                json.dump(d, f)
 
     for experiment, vals in d.items():
         color, style, marker = get_color_style(experiment)
@@ -138,29 +143,33 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None):
         plt.show()
 
 
-def draw_results_k_med(results, experiments, iterations_list, title=None):
+def draw_results_k_med(results, experiments, iterations_list, title=None, d=None):
     plt.figure(frameon=True)
 
-    d = {}
+    if d is None:
+        d = {}
 
-    for experiment in experiments:
-        experiment_results = [x for x in results if x['experiment'] == experiment]
+        for experiment in experiments:
+            experiment_results = [x for x in results if x['experiment'] == experiment]
 
-        d[experiment] = {'xs': [], 'ys': []}
+            d[experiment] = {'xs': [], 'ys': []}
 
-        for iterations in iterations_list:
-            iter_results = [x for x in experiment_results if x['info']['iterations'] == iterations]
-            mean_runtime = np.mean([x['info']['runtime'] for x in iter_results])
-            errs = np.array([0.5 * (np.abs(r['k1'] - r['k1_gt']) + np.abs(r['k2'] - r['k2_gt'])) for r in iter_results])
-            # errs.extend([np.abs(r['k2'] - r['k2_gt']) for r in iter_results])
-            # errs = np.array(errs)
-            errs[np.isnan(errs)] = 2.0
-            med = np.median(errs)
+            for iterations in iterations_list:
+                iter_results = [x for x in experiment_results if x['info']['iterations'] == iterations]
+                mean_runtime = np.mean([x['info']['runtime'] for x in iter_results])
+                errs = np.array([0.5 * (np.abs(r['k1'] - r['k1_gt']) + np.abs(r['k2'] - r['k2_gt'])) for r in iter_results])
+                # errs.extend([np.abs(r['k2'] - r['k2_gt']) for r in iter_results])
+                # errs = np.array(errs)
+                errs[np.isnan(errs)] = 2.0
+                med = np.median(errs)
 
-            d[experiment]['xs'].append(mean_runtime)
-            d[experiment]['ys'].append(med)
+                d[experiment]['xs'].append(mean_runtime)
+                d[experiment]['ys'].append(med)
 
-    d = process_curves(d, experiments, use_lowest=True)
+        d = process_curves(d, experiments, use_lowest=True)
+        if title is not None:
+            with open(f'fig_data/{title}_k.json') as f:
+                json.dump(d, f)
 
     for experiment, vals in d.items():
         color, style, marker = get_color_style(experiment)
@@ -187,29 +196,33 @@ def draw_results_k_med(results, experiments, iterations_list, title=None):
         plt.show()
 
 
-def draw_results_f_med(results, experiments, iterations_list, title=None):
+def draw_results_f_med(results, experiments, iterations_list, title=None, d=None):
     plt.figure(frameon=True)
 
-    d = {}
+    if d is None:
+        d = {}
 
-    for experiment in experiments:
-        experiment_results = [x for x in results if x['experiment'] == experiment]
+        for experiment in experiments:
+            experiment_results = [x for x in results if x['experiment'] == experiment]
 
-        d[experiment] = {'xs': [], 'ys': []}
+            d[experiment] = {'xs': [], 'ys': []}
 
-        for iterations in iterations_list:
-            iter_results = [x for x in experiment_results if x['info']['iterations'] == iterations]
-            mean_runtime = np.mean([x['info']['runtime'] for x in iter_results])
-            errs = np.array([0.5 * (np.abs(r['f1'] - r['f1_gt'])/r['f1_gt'] + np.abs(r['f2'] - r['f2_gt'])/r['f2_gt']) for r in iter_results])
-            # errs.extend([np.abs(r['k2'] - r['k2_gt']) for r in iter_results])
-            # errs = np.array(errs)
-            errs[np.isnan(errs)] = 2.0
-            med = np.median(errs)
+            for iterations in iterations_list:
+                iter_results = [x for x in experiment_results if x['info']['iterations'] == iterations]
+                mean_runtime = np.mean([x['info']['runtime'] for x in iter_results])
+                errs = np.array([0.5 * (np.abs(r['f1'] - r['f1_gt'])/r['f1_gt'] + np.abs(r['f2'] - r['f2_gt'])/r['f2_gt']) for r in iter_results])
+                # errs.extend([np.abs(r['k2'] - r['k2_gt']) for r in iter_results])
+                # errs = np.array(errs)
+                errs[np.isnan(errs)] = 2.0
+                med = np.median(errs)
 
-            d[experiment]['xs'].append(mean_runtime)
-            d[experiment]['ys'].append(med)
+                d[experiment]['xs'].append(mean_runtime)
+                d[experiment]['ys'].append(med)
 
-    d = process_curves(d, experiments, use_lowest=True)
+        d = process_curves(d, experiments, use_lowest=True)
+        if title is not None:
+            with open(f'fig_data/{title}_f.json') as f:
+                json.dump(d, f)
 
     for experiment, vals in d.items():
         color, style, marker = get_color_style(experiment)
