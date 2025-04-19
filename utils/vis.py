@@ -31,9 +31,9 @@ def get_color_style(experiment):
     if '+' in experiment:
         marker = None
     elif '_s3' in experiment:
-        marker = 'star'
+        marker = '*'
     else:
-        marker = 'circle'
+        marker = 'o'
 
     return color, style, marker
 
