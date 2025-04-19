@@ -161,6 +161,7 @@ def generate_table(dataset, i, feat, neq_only=False):
         name = '\\CATHEDRAL'
     elif dataset == 'pragueparks':
         basenames = ['pond', 'lizard', 'tree_new']
+        name = 'Prague Parks'
 
     else:
         raise ValueError
