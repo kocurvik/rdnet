@@ -14,8 +14,9 @@ print(colors)
 
 print(sns.color_palette("tab10").as_hex())
 
-def get_color_style(experiment, experiments):
-    basenames = sorted(list(set([x.split('+')[0] for x in experiments])))
+basenames = ['E_3pt', 'E_5pt', 'Efeq_6pt_s3', 'F_7pt_s3', 'kFk_9pt', 'k2Fk1_10pt']
+
+def get_color_style(experiment):
     color_dict = {exp: sns.color_palette("tab10")[i] for i, exp in enumerate(basenames)}
 
     color = color_dict[experiment.split('+')[0]]
@@ -27,7 +28,14 @@ def get_color_style(experiment, experiments):
     else:
         style = 'solid'
 
-    return color, style
+    if '+' in experiment:
+        marker = None
+    elif '_s3' in experiment:
+        marker = 'star'
+    else:
+        marker = 'circle'
+
+    return color, style, marker
 
 
 
@@ -106,8 +114,8 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None):
     d = process_curves(d, experiments, use_lowest=False)
 
     for experiment, vals in d.items():
-        color, style = get_color_style(experiment, experiments)
-        plt.semilogx(vals['xs'], vals['ys'], label=experiment, marker='*', color=color, linestyle=style)
+        color, style, marker = get_color_style(experiment)
+        plt.semilogx(vals['xs'], vals['ys'], label=experiment, color=color, linestyle=style, marker=marker)
 
     # plt.xlim([5.0, 1.9e4])
     plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
@@ -155,8 +163,8 @@ def draw_results_k_med(results, experiments, iterations_list, title=None):
     d = process_curves(d, experiments, use_lowest=True)
 
     for experiment, vals in d.items():
-        color, style = get_color_style(experiment, experiments)
-        plt.semilogx(vals['xs'], vals['ys'], label=experiment, marker='*', color=color, linestyle=style)
+        color, style, marker = get_color_style(experiment)
+        plt.semilogx(vals['xs'], vals['ys'], label=experiment, color=color, linestyle=style, marker=marker)
 
     plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
     # plt.ylabel('Median absolute $\\lambda$ error', fontsize=large_size)
@@ -204,8 +212,8 @@ def draw_results_f_med(results, experiments, iterations_list, title=None):
     d = process_curves(d, experiments, use_lowest=True)
 
     for experiment, vals in d.items():
-        color, style = get_color_style(experiment, experiments)
-        plt.semilogx(vals['xs'], vals['ys'], label=experiment, marker='*', color=color, linestyle=style)
+        color, style, marker = get_color_style(experiment)
+        plt.semilogx(vals['xs'], vals['ys'], label=experiment, color=color, linestyle=style, marker=marker)
 
     plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
     # plt.ylabel('Median absolute $\\lambda$ error', fontsize=large_size)
@@ -228,18 +236,34 @@ def draw_results_f_med(results, experiments, iterations_list, title=None):
         plt.show()
 
 
+
+def get_experiments(eq, geo_iters=(1,2,5,30)):
+    if eq:
+        experiments = ['Efeq_6pt', 'Efeq_6pt_s3', 'kFk_9pt']
+        experiments.extend([f'Efeq_6pt+Geo_VLO_{i}' for i in geo_iters])
+        experiments.extend([f'E_5pt+Geo_VLO_{i}' for i in geo_iters])
+        experiments.extend([f'E_3pt+Geo_VLO_{i}' for i in geo_iters])
+        experiments.extend([f'Efeq_6pt+Geo_V_{i}' for i in geo_iters])
+        experiments.extend([f'E_5pt+Geo_V_{i}' for i in geo_iters])
+        experiments.extend([f'E_3pt+Geo_V_{i}' for i in geo_iters])
+    else:
+        experiments = ['F_7pt', 'F_7pt_s3', 'k2Fk1_10pt']
+        experiments.extend([f'E_5pt+Geo_VLO_{i}' for i in geo_iters])
+        experiments.extend([f'E_5pt+Geo_V_{i}' for i in geo_iters])
+        experiments.extend([f'E_3pt+Geo_VLO_{i}' for i in geo_iters])
+        experiments.extend([f'E_3pt+Geo_V_{i}' for i in geo_iters])
+    return experiments
+
 def draw_graphs(name):
     with open(os.path.join('results', f'{name}.json'), 'r') as f:
         results = json.load(f)
 
-    experiments = sorted(list(set([x['experiment'] for x in results])))
+    experiments = get_experiments('eq' in name)
+    # experiments = sorted(list(set([x['experiment'] for x in results])))
 
     draw_results_pose_auc_10(results, experiments, iterations_list, title=name)
     draw_results_k_med(results, experiments, iterations_list, title=name)
     draw_results_f_med(results, experiments, iterations_list, title=name)
-
-
-
 
 if __name__ == '__main__':
     draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG')
