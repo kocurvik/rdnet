@@ -18,6 +18,7 @@ basenames = ['E_3pt', 'E_5pt', 'Efeq_6pt_s3', 'F_7pt_s3', 'kFk_9pt', 'k2Fk1_10pt
 
 def get_color_style(experiment):
     color_dict = {exp: sns.color_palette("tab10")[i] for i, exp in enumerate(basenames)}
+    color_dict['Efeq_6pt'] = color_dict['Efeq_6pt_s3']
 
     color = color_dict[experiment.split('+')[0]]
 
@@ -290,7 +291,11 @@ def draw_graphs(name, load=False):
         draw_results_f_med(results, experiments, iterations_list, title=name)
 
 if __name__ == '__main__':
-    draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG')
+    # draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG')
     draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG_eq')
     draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG')
     draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG_eq')
+    # draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG', load=True)
+    # draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG_eq', load=True)
+    # draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG', load=True)
+    # draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG_eq', load=True)
