@@ -115,7 +115,7 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None, 
         d = process_curves(d, experiments, use_lowest=False)
 
         if title is not None:
-            with open(f'fig_data/{title}_pose.json') as f:
+            with open(f'fig_data/{title}_pose.json', 'w') as f:
                 json.dump(d, f)
 
     for experiment, vals in d.items():
@@ -168,7 +168,7 @@ def draw_results_k_med(results, experiments, iterations_list, title=None, d=None
 
         d = process_curves(d, experiments, use_lowest=True)
         if title is not None:
-            with open(f'fig_data/{title}_k.json') as f:
+            with open(f'fig_data/{title}_k.json', 'w') as f:
                 json.dump(d, f)
 
     for experiment, vals in d.items():
@@ -221,7 +221,7 @@ def draw_results_f_med(results, experiments, iterations_list, title=None, d=None
 
         d = process_curves(d, experiments, use_lowest=True)
         if title is not None:
-            with open(f'fig_data/{title}_f.json') as f:
+            with open(f'fig_data/{title}_f.json', 'w') as f:
                 json.dump(d, f)
 
     for experiment, vals in d.items():
@@ -267,16 +267,27 @@ def get_experiments(eq, geo_iters=(1,2,5,30)):
         experiments.extend([f'E_3pt+Geo_V_{i}' for i in geo_iters])
     return experiments
 
-def draw_graphs(name):
-    with open(os.path.join('results', f'{name}.json'), 'r') as f:
-        results = json.load(f)
+def draw_graphs(name, load=False):
+    if load:
+        with open(f'fig_data/{name}_pose.json') as f:
+            d = json.load(f)
+        draw_results_pose_auc_10(None, None, None, title=name, d=d)
+        with open(f'fig_data/{name}_k.json') as f:
+            d = json.load(f)
+        draw_results_f_med(None, None, None, title=name, d=d)
+        with open(f'fig_data/{name}_f.json') as f:
+            d = json.load(f)
+        draw_results_f_med(None, None, None, title=name, d=d)
+    else:
+        with open(os.path.join('results', f'{name}.json'), 'r') as f:
+            results = json.load(f)
 
-    experiments = get_experiments('eq' in name)
-    # experiments = sorted(list(set([x['experiment'] for x in results])))
+        experiments = get_experiments('eq' in name)
+        # experiments = sorted(list(set([x['experiment'] for x in results])))
 
-    draw_results_pose_auc_10(results, experiments, iterations_list, title=name)
-    draw_results_k_med(results, experiments, iterations_list, title=name)
-    draw_results_f_med(results, experiments, iterations_list, title=name)
+        draw_results_pose_auc_10(results, experiments, iterations_list, title=name)
+        draw_results_k_med(results, experiments, iterations_list, title=name)
+        draw_results_f_med(results, experiments, iterations_list, title=name)
 
 if __name__ == '__main__':
     draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG')
