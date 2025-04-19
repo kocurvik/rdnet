@@ -252,8 +252,12 @@ def eval(args):
         C_file = h5py.File(os.path.join(dataset_path, f'{args.feature_file}.h5'))
         if args.synth:
             if 'pragueparks' in args.dataset_path:
-                Geo_file = h5py.File(
-                    os.path.join(dataset_path, f'GeoCalibPredictions_{synth_char}-{eq_string}.h5'))
+                if args.eq:
+                    Geo_file = h5py.File(
+                        os.path.join(dataset_path, f'GeoCalibPredictions_{synth_char}-{eq_string}-multi.h5'))
+                else:
+                    Geo_file = h5py.File(
+                        os.path.join(dataset_path, f'GeoCalibPredictions_{synth_char}-{eq_string}.h5'))
             else:
                 if args.eq:
                     Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_{synth_char}-{eq_string}-final-multi.h5'))
