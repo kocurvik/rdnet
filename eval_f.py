@@ -190,7 +190,7 @@ def eval(args):
         assert synth_string in args.feature_file
         eq_string = 'eq' if args.eq else 'uneq'
         feq_string = 'eq' if args.eq else 'uneq-final'
-        if 'pragueparks' in args.dataset_path:
+        if 'pragueparks' in args.dataset_path and not args.eq:
             S_file = h5py.File(os.path.join(args.dataset_path, f'{synth_string}-{eq_string}-parameters_rd.h5'))
         else:
             S_file = h5py.File(os.path.join(args.dataset_path, f'{synth_string}-{feq_string}-distortion.h5'))
@@ -235,7 +235,7 @@ def eval(args):
         if args.eq:
             s_string = f"-syntheq{args.synth}"
     t_string = "" if args.threshold == 3.0 else f'-{args.threshold}t'
-    json_string = f'focal-{basename}-{matches_basename}{s_string}.json'
+    json_string = f'focal-{basename}-{matches_basename}{s_string}{t_string}.json'
 
     if args.load:
         print("Loading: ", json_string)
@@ -245,7 +245,7 @@ def eval(args):
     else:
         R_file = h5py.File(os.path.join(dataset_path, 'R.h5'))
         T_file = h5py.File(os.path.join(dataset_path, 'T.h5'))
-        if 'pragueparks' in args.dataset_path:
+        if 'pragueparks' in args.dataset_path and not args.eq:
             P_file = h5py.File(os.path.join(args.dataset_path, f'{synth_string}-{eq_string}-parameters_rd.h5'))
         else:
             P_file = h5py.File(os.path.join(dataset_path, 'parameters_rd.h5'))
@@ -279,7 +279,7 @@ def eval(args):
 
         pairs = get_pairs(C_file)
 
-        if (args.synth or args.eq) and 'pragueparks' not in args.dataset_path:
+        if (args.synth or args.eq) and ('pragueparks' not in args.dataset_path or args.eq):
             geo_k_dict = {}
             geo_f_dict = {}
             geo_g_dict = {}
@@ -332,8 +332,6 @@ def eval(args):
                 K1 = camera_dicts[img_name_1]
                 K2 = camera_dicts[img_name_2]
 
-
-
                 if args.synth:
                     if args.eq:
                         # matches = np.array(C_file[f'{img_name_1}-{img_name_2}-eq'])
@@ -353,7 +351,7 @@ def eval(args):
                 kp1_distorted, T1 = normalize(kp1, w_dict[img_name_1], h_dict[img_name_1])
                 kp2_distorted, T2 = normalize(kp2, w_dict[img_name_2], h_dict[img_name_2])
 
-                if args.synth and 'pragueparks' not in args.dataset_path:
+                if args.synth and ('pragueparks' not in args.dataset_path or args.eq):
                     if args.eq:
                         k1 = S_file[f'{img_name_1}-{img_name_2}'][()]
                         k2 = k1
@@ -364,7 +362,7 @@ def eval(args):
                     k1 = k_dict[img_name_1]
                     k2 = k_dict[img_name_2]
 
-                if (args.synth or args.eq) and 'pragueparks' not in dataset_path:
+                if (args.synth or args.eq) and ('pragueparks' not in args.dataset_path or args.eq):
                     net_dict = {'Geo_k1': geo_k_dict[f'{img_name_1}-{img_name_2}-k1'],
                                 'Geo_k2': geo_k_dict[f'{img_name_1}-{img_name_2}-k2'],
                                 'Geo_f1': geo_f_dict[f'{img_name_1}-{img_name_2}-f1'],

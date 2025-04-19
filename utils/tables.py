@@ -46,12 +46,13 @@ def table_text(dataset_name, eq_rows, neq_rows, sarg):
         f'\\begin{{tabular}}{{ c | r c c | c c c | c c | c c | c}}\n'
         f'    \\toprule\n'
         f'    & & & & \\multicolumn{{7}}{{c}}{{Poselib - {dataset_name}}} \\\\\n'
-        f'    \\midrule\n')
+        f'    \\midrule\n'
+        f'    & Minimal & Refinement & Sample & AVG $(^\\circ)$ $\\downarrow$ & MED $(^\\circ)$ $\\downarrow$ & AUC@10 $\\uparrow$ & AVG $\\epsilon(\\lambda)$ $\\downarrow$ & MED $\\epsilon(\\lambda)$ $\\downarrow$  & AVG $\\xi(f)$ $\\downarrow$ & MED $\\xi(f)$ $\\downarrow$ & Time (ms) $\\downarrow$ \\\\\n'
+        f'    \\midrule\n'
+    )
 
     if eq_rows is not None:
         table_f_string += (
-            f'    & Minimal & Refinement & Sample & AVG $(^\\circ)$ $\\downarrow$ & MED $(^\\circ)$ $\\downarrow$ & AUC@10 $\\uparrow$ & AVG $\\epsilon(\\lambda)$ $\\downarrow$ & MED $\\epsilon(\\lambda)$ $\\downarrow$  & AVG $\\xi(f)$ $\\downarrow$ & MED $\\xi(f)$ $\\downarrow$ & Time (ms) $\\downarrow$ \\\\\n'
-            f'    \\midrule\n'
             f'    \\multirow{{{leq}}}{{*}}{{\\rotatebox[origin=c]{{90}}{{$\\lambda_1 = \\lambda_2$}}}} '
             f'    & 9pt \\Fkk & $\\R,\\tvec,f,\\lambda$ & \\ding{{55}} & {eq_rows[0]} \\\\\n'
             f'    & 10pt \\Fkk & $\\R,\\tvec,f,\\lambda$ & \\ding{{55}} & {eq_rows[1]} \\\\\n'
@@ -278,4 +279,4 @@ if __name__ == '__main__':
         generate_table('eth3d', i, 'superpoint')
 
     for i in range(1, 4):
-        generate_table('pragueparks', i, 'superpoint', neq_only=True)
+        generate_table('pragueparks', i, 'superpoint', neq_only=False)
