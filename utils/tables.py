@@ -121,6 +121,7 @@ def get_rows(results, order, div_by_4=False):
                 [0.5 * (np.abs(r['f1'] - r['f1_gt']) / r['f1_gt'] + np.abs(r['f2'] - r['f2_gt']) / r['f2_gt'])
                  for r in exp_results])
         f_errs[np.isnan(f_errs)] = 1.0
+        f_errs[f_errs>4.0] = 4.0
         f_avg = np.mean(f_errs)
         f_med = np.median(f_errs)
         f_res = np.array([np.sum(p_errs < t / 100) / len(p_errs) for t in range(1, 21)])
