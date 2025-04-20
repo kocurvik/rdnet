@@ -170,17 +170,21 @@ def generate_table(dataset, i, feat, eq_only=False):
     else:
         raise ValueError
 
-    if i > 0:
-        synth_char = "XABC"[i]
-        name = name + f' - Synth {synth_char}'
-
-    if i > 0:
-        neq_results_type = f'synth{synth_char}-uneq-final-pairs-features_{feat}_noresize_2048-LG-synth{i}'
-        eq_results_type = f'synth{synth_char}-eq-final-pairs-features_{feat}_noresize_2048-LG-syntheq{i}'
+    if features is None:
+        neq_results_type = 'features'
+        eq_results_type = 'features'
     else:
-        neq_results_type = f'pairs-features_{feat}_noresize_2048-LG'
+        if i > 0:
+            synth_char = "XABC"[i]
+            name = name + f' - Synth {synth_char}'
 
-        eq_results_type = f'pairs-features_{feat}_noresize_2048-LG_eq'
+        if i > 0:
+            neq_results_type = f'synth{synth_char}-uneq-final-pairs-features_{feat}_noresize_2048-LG-synth{i}'
+            eq_results_type = f'synth{synth_char}-eq-final-pairs-features_{feat}_noresize_2048-LG-syntheq{i}'
+        else:
+            neq_results_type = f'pairs-features_{feat}_noresize_2048-LG'
+
+            eq_results_type = f'pairs-features_{feat}_noresize_2048-LG_eq'
 
     # results_type = 'graph-SIFT_triplet_correspondences'
 
@@ -272,13 +276,15 @@ def print_results(experiments, results, eq_only=False):
 
 if __name__ == '__main__':
     for features in ['superpoint']:
-        generate_table('rotunda', 0, features)
-        generate_table('cathedral', 0, features)
+        # generate_table('rotunda', 0, features)
+        # generate_table('cathedral', 0, features)
+        generate_table('Euroc', 0, None)
 
     # for i in range(1, 4):
     #     generate_table('pt', i, 'superpoint')
-    for i in range(1, 4):
-        generate_table('eth3d', i, 'superpoint')
+    # for i in range(1, 4):
+    #     generate_table('eth3d', i, 'superpoint')
+    #
+    # for i in range(1, 4):
+    #     generate_table('pragueparks', i, 'superpoint', eq_only=False)
 
-    for i in range(1, 4):
-        generate_table('pragueparks', i, 'superpoint', eq_only=False)
