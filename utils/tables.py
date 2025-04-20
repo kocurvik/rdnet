@@ -170,7 +170,7 @@ def generate_table(dataset, i, feat, eq_only=False):
     else:
         raise ValueError
 
-    if features is None:
+    if feat is None:
         neq_results_type = 'features'
         eq_results_type = 'features'
     else:
