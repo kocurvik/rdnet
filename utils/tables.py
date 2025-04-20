@@ -73,24 +73,25 @@ def table_text(dataset_name, eq_rows, neq_rows, sarg):
             f'    & 3pt \\E & $\\R,\\tvec,f,\\lambda$ & GeoCalib - $\\lambda,f,\\g$ & {eq_rows[16]} \\\\\n'
         )
 
-    table_f_string += (
-        f'    \\midrule\n'
-        f'    \\midrule\n'
-        f'    \\multirow{{{lneq}}}{{*}}{{\\rotatebox[origin=c]{{90}}{{$\\lambda_1 \\neq \\lambda_2$}}}} '
-        f'    & 9pt \\Fkk & $\\R,\\tvec,f_1,f_2,\\lambda_1,\\lambda_2$ & \\ding{{55}} & {neq_rows[0]} \\\\\n'
-        f'    & 10pt \\Fkk & $\\R,\\tvec,f_1,f_2,\\lambda_1, \\lambda_2$ & \\ding{{55}} & {neq_rows[1]} \\\\\n'
-        f'    & 7pt \\F & $\\R,\\tvec,f_1, f_2$ & $\\lambda_1 = \\lambda_2$ = 0 & {neq_rows[2]} \\\\\n'
-        f'    & 7pt \\F & $\\R,\\tvec,f_1, f_2, \\lambda_1, \\lambda_2$ & $\\lambda_1 = \\lambda_2 = {rd_val}  $ & {neq_rows[3]} \\\\\n'
-        f'    {comment} & 7pt \\F & $\\R,\\tvec,f_1, f_2, \\lambda_1, \\lambda_2$ & $\\lambda_1, \\lambda_2 \\in \\{{{rd_vals}\\}} $ & {neq_rows[4]} \\\\\n'
-        f'    & 7pt \\F & $\\R,\\tvec,f_1, f_2$ & GeoCalib - $\\lambda_1, \\lambda_2$ & {neq_rows[5]} \\\\\n'
-        f'    & 7pt \\F & $\\R,\\tvec,f_1,f_2,\\lambda_1, \\lambda_2$ &  GeoCalib - $\\lambda_1, \\lambda_2$ & {neq_rows[6]} \\\\\n'
-        f'    & 5pt \\E & $\\R, \\tvec$ & GeoCalib - $\\lambda_1, \\lambda_2,f_1, f_2$ & {neq_rows[7]} \\\\\n'
-        f'    & 5pt \\E & $\\R,\\tvec,f_1, f_2,\\lambda_1, \\lambda_2$ & GeoCalib - $\\lambda_1,\\lambda_2,f_1,f_2$ & {neq_rows[8]} \\\\\n'
-        f'    & 3pt \\E & $\\R,\\tvec$ & GeoCalib - $\\lambda_1, \\lambda_2,f_1, f_2,\\g_1,\\g_2$ & {neq_rows[9]} \\\\\n'
-        f'    & 3pt \\E & $\\R,\\tvec,f_1,f_2, \\lambda_1, \\lambda_2 $ & GeoCalib - $\\lambda_1, \\lambda_2, f_1, f_2, \\g_1, \\g_2$ & {neq_rows[10]} \\\\\n'
-        f'    \\bottomrule\n'
-        f'\\end{{tabular}}'
-    )
+    if neq_rows is not None:
+        table_f_string += (
+            f'    \\midrule\n'
+            f'    \\midrule\n'
+            f'    \\multirow{{{lneq}}}{{*}}{{\\rotatebox[origin=c]{{90}}{{$\\lambda_1 \\neq \\lambda_2$}}}} '
+            f'    & 9pt \\Fkk & $\\R,\\tvec,f_1,f_2,\\lambda_1,\\lambda_2$ & \\ding{{55}} & {neq_rows[0]} \\\\\n'
+            f'    & 10pt \\Fkk & $\\R,\\tvec,f_1,f_2,\\lambda_1, \\lambda_2$ & \\ding{{55}} & {neq_rows[1]} \\\\\n'
+            f'    & 7pt \\F & $\\R,\\tvec,f_1, f_2$ & $\\lambda_1 = \\lambda_2$ = 0 & {neq_rows[2]} \\\\\n'
+            f'    & 7pt \\F & $\\R,\\tvec,f_1, f_2, \\lambda_1, \\lambda_2$ & $\\lambda_1 = \\lambda_2 = {rd_val}  $ & {neq_rows[3]} \\\\\n'
+            f'    {comment} & 7pt \\F & $\\R,\\tvec,f_1, f_2, \\lambda_1, \\lambda_2$ & $\\lambda_1, \\lambda_2 \\in \\{{{rd_vals}\\}} $ & {neq_rows[4]} \\\\\n'
+            f'    & 7pt \\F & $\\R,\\tvec,f_1, f_2$ & GeoCalib - $\\lambda_1, \\lambda_2$ & {neq_rows[5]} \\\\\n'
+            f'    & 7pt \\F & $\\R,\\tvec,f_1,f_2,\\lambda_1, \\lambda_2$ &  GeoCalib - $\\lambda_1, \\lambda_2$ & {neq_rows[6]} \\\\\n'
+            f'    & 5pt \\E & $\\R, \\tvec$ & GeoCalib - $\\lambda_1, \\lambda_2,f_1, f_2$ & {neq_rows[7]} \\\\\n'
+            f'    & 5pt \\E & $\\R,\\tvec,f_1, f_2,\\lambda_1, \\lambda_2$ & GeoCalib - $\\lambda_1,\\lambda_2,f_1,f_2$ & {neq_rows[8]} \\\\\n'
+            f'    & 3pt \\E & $\\R,\\tvec$ & GeoCalib - $\\lambda_1, \\lambda_2,f_1, f_2,\\g_1,\\g_2$ & {neq_rows[9]} \\\\\n'
+            f'    & 3pt \\E & $\\R,\\tvec,f_1,f_2, \\lambda_1, \\lambda_2 $ & GeoCalib - $\\lambda_1, \\lambda_2, f_1, f_2, \\g_1, \\g_2$ & {neq_rows[10]} \\\\\n'
+            f'    \\bottomrule\n')
+
+    table_f_string += f'\\end{{tabular}}'
     return table_f_string
 
 
@@ -147,7 +148,7 @@ def get_rows(results, order, div_by_4=False):
 
     return [' & '.join(row) for row in text_rows]
 
-def generate_table(dataset, i, feat, neq_only=False):
+def generate_table(dataset, i, feat, eq_only=False):
     if dataset == 'pt':
         basenames = basenames_pt
         name = '\\Phototourism'
@@ -163,7 +164,9 @@ def generate_table(dataset, i, feat, neq_only=False):
     elif dataset == 'pragueparks':
         basenames = ['pond', 'lizard', 'tree_new']
         name = 'Prague Parks'
-
+    elif dataset == 'Euroc':
+        basenames = ['V1_03_difficult', 'V2_03_difficult', 'V2_01_easy', 'V1_01_easy', 'V2_02_medium', 'V1_02_medium']
+        name = 'Euroc'
     else:
         raise ValueError
 
@@ -171,15 +174,12 @@ def generate_table(dataset, i, feat, neq_only=False):
         synth_char = "XABC"[i]
         name = name + f' - Synth {synth_char}'
 
-    if i > 0 and dataset == 'pt':
+    if i > 0:
         neq_results_type = f'synth{synth_char}-uneq-final-pairs-features_{feat}_noresize_2048-LG-synth{i}'
         eq_results_type = f'synth{synth_char}-eq-final-pairs-features_{feat}_noresize_2048-LG-syntheq{i}'
-    elif i > 0 and dataset == 'pragueparks':
-        neq_results_type = f'synth{synth_char}-uneq-pairs-features_{feat}_noresize_2048-LG-synth{i}'
-        # eq_results_type = f'synth{synth_char}-eq-pairs-features_{feat}_noresize_2048-LG-syntheq{i}'
-        eq_results_type = None
     else:
         neq_results_type = f'pairs-features_{feat}_noresize_2048-LG'
+
         eq_results_type = f'pairs-features_{feat}_noresize_2048-LG_eq'
 
     # results_type = 'graph-SIFT_triplet_correspondences'
@@ -187,16 +187,17 @@ def generate_table(dataset, i, feat, neq_only=False):
     neq_results = []
     eq_results = []
     for basename in basenames:
-        json_path = os.path.join('results', f'focal-{basename}-{neq_results_type}.json')
-        print(f'json_path: {json_path}')
-        with open(json_path, 'r') as f:
-            neq_results.extend(json.load(f))
-
-        if not neq_only:
-            json_path = os.path.join('results', f'focal-{basename}-{eq_results_type}.json')
+        if not eq_only:
+            json_path = os.path.join('results', f'focal-{basename}-{neq_results_type}.json')
             print(f'json_path: {json_path}')
             with open(json_path, 'r') as f:
-                eq_results.extend(json.load(f))
+                neq_results.extend(json.load(f))
+
+
+        json_path = os.path.join('results', f'focal-{basename}-{eq_results_type}.json')
+        print(f'json_path: {json_path}')
+        with open(json_path, 'r') as f:
+            eq_results.extend(json.load(f))
 
     print("Data loaded")
 
@@ -206,11 +207,12 @@ def generate_table(dataset, i, feat, neq_only=False):
     print("Printing: ", name)
     print(30 * '*')
 
-    neq_rows = get_rows(neq_results, neq_order, div_by_4=(i > 0) and 'pragueparks' != dataset)
-    if not neq_only:
-        eq_rows = get_rows(eq_results, eq_order, div_by_4=(i > 0) and 'pragueparks' != dataset)
+    if not eq_only:
+        neq_rows = get_rows(neq_results, neq_order, div_by_4=(i > 0) and 'pragueparks' != dataset)
     else:
-        eq_rows = None
+        neq_rows = None
+
+    eq_rows = get_rows(eq_results, eq_order, div_by_4=(i > 0) and 'pragueparks' != dataset)
     print(table_text(name, eq_rows, neq_rows, i))
 
 
@@ -279,4 +281,4 @@ if __name__ == '__main__':
         generate_table('eth3d', i, 'superpoint')
 
     for i in range(1, 4):
-        generate_table('pragueparks', i, 'superpoint', neq_only=False)
+        generate_table('pragueparks', i, 'superpoint', eq_only=False)

@@ -265,7 +265,10 @@ def eval(args):
                     Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_{synth_char}-{eq_string}-final.h5'))
         else:
             if args.eq:
-                Geo_file = h5py.File(os.path.join(dataset_path, 'GeoCalibPredictions_kfg_multi2.h5'))
+                if 'Euroc' in dataset_path:
+                    Geo_file = h5py.File(os.path.join(dataset_path, 'GeoCalibPredictions_kfg_multi.h5'))
+                else:
+                    Geo_file = h5py.File(os.path.join(dataset_path, 'GeoCalibPredictions_kfg_multi2.h5'))
             else:
                 Geo_file = h5py.File(os.path.join(dataset_path, f'GeoCalibPredictions_kfg.h5'))
 
