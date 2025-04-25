@@ -277,15 +277,13 @@ def print_results(experiments, results, eq_only=False):
 
 if __name__ == '__main__':
     for features in ['superpoint']:
-        # generate_table('rotunda', 0, features)
-        # generate_table('cathedral', 0, features)
+        generate_table('rotunda', 0, features)
+        generate_table('cathedral', 0, features)
         generate_table('Euroc', 0, None)
 
-    # for i in range(1, 4):
-    #     generate_table('pt', i, 'superpoint')
-    # for i in range(1, 4):
-    #     generate_table('eth3d', i, 'superpoint')
-    #
-    # for i in range(1, 4):
-    #     generate_table('pragueparks', i, 'superpoint', eq_only=False)
+    for i in range(1, 4):
+        generate_table('eth3d', i, 'superpoint')
+
+    for i in range(1, 4):
+        generate_table('pragueparks', i, 'superpoint')
 

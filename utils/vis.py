@@ -90,7 +90,7 @@ def process_curves(d, experiments, use_lowest=True):
 
 
 def draw_results_pose_auc_10(results, experiments, iterations_list, title=None, d=None):
-    plt.figure(frameon=True)
+    plt.figure(frameon=False, figsize=(8, 5))
 
     if d is None:
         d = {}
@@ -123,20 +123,21 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None, 
         color, style, marker = get_color_style(experiment)
         plt.semilogx(vals['xs'], vals['ys'], label=experiment, color=color, linestyle=style, marker=marker)
 
-    # plt.xlim([5.0, 1.9e4])
+    plt.xlim([15.0, 1e3 + 170])
+    plt.ylim([0.2, 0.6])
     plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
     plt.ylabel('AUC@10$^\\circ$', fontsize=large_size, **font)
     plt.tick_params(axis='x', which='major', labelsize=small_size)
     plt.tick_params(axis='y', which='major', labelsize=small_size)
     if title is not None:
-        plt.title(title)
+        # plt.title(title)
         # plt.legend()
-        plt.savefig(f'figs/{title}_pose.pdf')#, bbox_inches='tight', pad_inches=0)
+        plt.savefig(f'figs/{title}_pose.pdf', bbox_inches='tight', pad_inches=0.2)
         print(f'saved pose: {title}')
 
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         # plt.show()
-        plt.savefig(f'figs/{title}_pose.png', bbox_inches='tight', pad_inches=0)
+        plt.savefig(f'figs/{title}_pose.png', bbox_inches='tight', pad_inches=0.2)
         print(f'saved pose: {title}')
 
     else:
@@ -145,7 +146,7 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None, 
 
 
 def draw_results_k_med(results, experiments, iterations_list, title=None, d=None):
-    plt.figure(frameon=True)
+    plt.figure(frameon=False, figsize=(8, 5))
 
     if d is None:
         d = {}
@@ -180,25 +181,25 @@ def draw_results_k_med(results, experiments, iterations_list, title=None, d=None
     # plt.ylabel('Median absolute $\\lambda$ error', fontsize=large_size)
     # plt.ylabel('Mean $\\epsilon(\\lambda)$', fontsize=large_size, **font)
     plt.ylabel('Median ε(λ)', fontsize=large_size, **font)
-    plt.ylim([0.0, 0.5])
-    # plt.xlim([5.0, 1.9e4])
+    plt.ylim([0.0, 0.3])
+    plt.xlim([15.0, 1e3 + 170])
     plt.tick_params(axis='x', which='major', labelsize=small_size)
     plt.tick_params(axis='y', which='major', labelsize=small_size)
     if title is not None:
-        plt.title(title)
+        # plt.title(title)
         # plt.legend()
-        plt.savefig(f'figs/{title}_k.pdf', bbox_inches='tight', pad_inches=0)
+        plt.savefig(f'figs/{title}_k.pdf', bbox_inches='tight', pad_inches=0.2)
         print(f'saved k: {title}')
 
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        plt.savefig(f'figs/{title}_k.png', bbox_inches='tight', pad_inches=0)
+        plt.savefig(f'figs/{title}_k.png', bbox_inches='tight', pad_inches=0.2)
     else:
         plt.legend()
         plt.show()
 
 
 def draw_results_f_med(results, experiments, iterations_list, title=None, d=None):
-    plt.figure(frameon=True)
+    plt.figure(frameon=False, figsize=(8, 5))
 
     if d is None:
         d = {}
@@ -233,18 +234,18 @@ def draw_results_f_med(results, experiments, iterations_list, title=None, d=None
     # plt.ylabel('Median absolute $\\lambda$ error', fontsize=large_size)
     # plt.ylabel('Mean $\\epsilon(\\lambda)$', fontsize=large_size, **font)
     plt.ylabel('Median ξ(f)', fontsize=large_size, **font)
-    plt.ylim([0.0, 0.5])
-    # plt.xlim([5.0, 1.9e4])
+    plt.ylim([0.0, 0.4])
+    plt.xlim([15.0, 1e3 + 170])
     plt.tick_params(axis='x', which='major', labelsize=small_size)
     plt.tick_params(axis='y', which='major', labelsize=small_size)
     if title is not None:
         # plt.legend()
-        plt.title(title)
-        plt.savefig(f'figs/{title}_f.pdf', bbox_inches='tight', pad_inches=0)
+        # plt.title(title)
+        plt.savefig(f'figs/{title}_f.pdf', bbox_inches='tight', pad_inches=0.2)
         print(f'saved k: {title}')
 
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        plt.savefig(f'figs/{title}_f.png', bbox_inches='tight', pad_inches=0)
+        plt.savefig(f'figs/{title}_f.png', bbox_inches='tight', pad_inches=0.2)
     else:
         plt.legend()
         plt.show()
@@ -268,14 +269,14 @@ def get_experiments(eq, geo_iters=(1,2,5,30)):
         experiments.extend([f'E_3pt+Geo_V_{i}' for i in geo_iters])
     return experiments
 
-def draw_graphs(name, load=False):
+def draw_graphs(name, load=False, **kwargs):
     if load:
         with open(f'fig_data/{name}_pose.json') as f:
             d = json.load(f)
         draw_results_pose_auc_10(None, None, None, title=name, d=d)
         with open(f'fig_data/{name}_k.json') as f:
             d = json.load(f)
-        draw_results_f_med(None, None, None, title=name, d=d)
+        draw_results_k_med(None, None, None, title=name, d=d)
         with open(f'fig_data/{name}_f.json') as f:
             d = json.load(f)
         draw_results_f_med(None, None, None, title=name, d=d)
@@ -291,11 +292,11 @@ def draw_graphs(name, load=False):
         draw_results_f_med(results, experiments, iterations_list, title=name)
 
 if __name__ == '__main__':
-    # draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG')
+    draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG')
     draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG_eq')
     draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG')
     draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG_eq')
-    # draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG', load=True)
-    # draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG_eq', load=True)
-    # draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG', load=True)
-    # draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG_eq', load=True)
+    draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG', load=True, xlim = [30.0, 1e3 + 150])
+    draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG_eq', load=True, xlim = [30.0, 1e3 + 150])
+    draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG', load=True, xlim = [15.0, 1e3 + 170])
+    draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG_eq', load=True, xlim = [15.0, 1e3 + 170])
