@@ -4,7 +4,7 @@ This repo contains code for paper "Are Minimal Radial Distortion Solvers Necessa
 
 ## Installation
 
-Create an environment with pytorch and packaged from `requirements.txt`.
+Create an environment with pytorch and packages from `requirements.txt`.
 
 Install [PoseLib fork with robust radial distortion estimators](https://github.com/kocurvik/PoseLib/tree/rdnet) into the environment:
 ```shell
@@ -14,7 +14,7 @@ git checkout rdnet
 pip install .
 ```
 
-Before running the python scripts make sure that the repo is in your python path (e.g. `export PYTHONPATH=/path/to/repo/rd`)
+Before running the python scripts make sure that the repo is in your python path (e.g. `export PYTHONPATH=/path/to/repo/rdnet`)
 
 ## Running experiments
 
