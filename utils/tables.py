@@ -131,7 +131,7 @@ def get_rows(results, order, div_by_4=False):
         time_avg = np.mean(times)
 
         if 'Geo' in experiment:
-            time_avg += 185
+            time_avg += 185 * 2
 
         num_rows.append([p_avg, p_med, p_auc_10, k_avg, k_med, f_avg, f_med, time_avg])
 
