@@ -7,14 +7,47 @@ from matplotlib import pyplot as plt
 
 from utils.data import experiments, iterations_list, colors
 
-large_size = 24
-small_size = 20
+large_size = 16
+small_size = 14
 
 print(colors)
 
 print(sns.color_palette("tab10").as_hex())
 
 basenames = ['E_3pt', 'E_5pt', 'Efeq_6pt_s3', 'F_7pt_s3', 'kFk_9pt', 'k2Fk1_10pt']
+
+# palette = [sns.color_palette("tab10")[i] for i in [0,1,2,3,4,5,6,8,9]]
+#
+# def get_color_style(experiment, experiments):
+#     color_dict = {exp: palette[i] for i, exp in enumerate(experiments)}
+#     if 'Efeq_6pt_s3' in experiments:
+#         color_dict['Efeq_6pt'] = color_dict['Efeq_6pt_s3']
+#
+#     # color = color_dict[experiment.split('+')[0]]
+#
+#     color = color_dict[experiment]
+#
+#     if '+' in experiment and 'VLO' in experiment:
+#         style = 'dashed'
+#     elif '+' in experiment:
+#         style = 'dashdot'
+#     else:
+#         style = 'solid'
+#
+#     marker = None
+#
+#     if 'k2Fk1' in experiment or 'kFk' in experiment:
+#         marker = 'o'
+#
+#     if '_s3' in experiment:
+#         marker = '*'
+#
+#     if '_VLO' in experiment:
+#         marker = None
+#     elif '_V' in experiment:
+#         marker = None
+#
+#     return color, style, marker
 
 def get_color_style(experiment):
     color_dict = {exp: sns.color_palette("tab10")[i] for i, exp in enumerate(basenames)}
@@ -23,9 +56,9 @@ def get_color_style(experiment):
     color = color_dict[experiment.split('+')[0]]
 
     if '+' in experiment and 'VLO' in experiment:
-        style = 'dashed'
-    elif '+' in experiment:
         style = 'dotted'
+    elif '+' in experiment:
+        style = 'solid'
     else:
         style = 'solid'
 
@@ -89,8 +122,8 @@ def process_curves(d, experiments, use_lowest=True):
     return new_d
 
 
-def draw_results_pose_auc_10(results, experiments, iterations_list, title=None, d=None):
-    plt.figure(frameon=False, figsize=(8, 5))
+def draw_results_pose_auc_10(results, experiments, iterations_list, ylim=(0.2, 0.8), title=None, d=None, xlim=[15.0, 1e3 + 170]):
+    plt.figure(frameon=False, figsize=(0.5 * 8, 0.5 * 5))
 
     if d is None:
         d = {}
@@ -123,21 +156,23 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None, 
         color, style, marker = get_color_style(experiment)
         plt.semilogx(vals['xs'], vals['ys'], label=experiment, color=color, linestyle=style, marker=marker)
 
-    plt.xlim([15.0, 1e3 + 170])
-    plt.ylim([0.2, 0.6])
+    plt.xlim(xlim)
+    plt.ylim(ylim)
     plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
+    logscale_text_pos = 0.7 if xlim[0] == 15.0 else 0.65
+    plt.text(logscale_text_pos, -0.1, '— log. scale —', ha='center', va='center', transform=plt.gca().transAxes, fontsize=12, fontstyle='italic')
     plt.ylabel('AUC@10$^\\circ$', fontsize=large_size, **font)
     plt.tick_params(axis='x', which='major', labelsize=small_size)
     plt.tick_params(axis='y', which='major', labelsize=small_size)
     if title is not None:
         # plt.title(title)
         # plt.legend()
-        plt.savefig(f'figs/{title}_pose.pdf', bbox_inches='tight', pad_inches=0.2)
+        plt.savefig(f'figs/{title}_pose.pdf', bbox_inches='tight', pad_inches=0.0)
         print(f'saved pose: {title}')
 
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         # plt.show()
-        plt.savefig(f'figs/{title}_pose.png', bbox_inches='tight', pad_inches=0.2)
+        plt.savefig(f'figs/{title}_pose.png', bbox_inches='tight', pad_inches=0.0)
         print(f'saved pose: {title}')
 
     else:
@@ -145,8 +180,8 @@ def draw_results_pose_auc_10(results, experiments, iterations_list, title=None, 
         plt.show()
 
 
-def draw_results_k_med(results, experiments, iterations_list, title=None, d=None):
-    plt.figure(frameon=False, figsize=(8, 5))
+def draw_results_k_med(results, experiments, iterations_list, title=None, d=None, ylim=(0,0.2), xlim=[15.0, 1e3 + 170]):
+    plt.figure(frameon=False, figsize=(0.5 * 8, 0.5 * 5))
 
     if d is None:
         d = {}
@@ -178,28 +213,29 @@ def draw_results_k_med(results, experiments, iterations_list, title=None, d=None
         plt.semilogx(vals['xs'], vals['ys'], label=experiment, color=color, linestyle=style, marker=marker)
 
     plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
-    # plt.ylabel('Median absolute $\\lambda$ error', fontsize=large_size)
+    logscale_text_pos = 0.7 if xlim[0] == 15.0 else 0.65
+    plt.text(logscale_text_pos, -0.1, '— log. scale —', ha='center', va='center', transform=plt.gca().transAxes, fontsize=12, fontstyle='italic')
     # plt.ylabel('Mean $\\epsilon(\\lambda)$', fontsize=large_size, **font)
     plt.ylabel('Median ε(λ)', fontsize=large_size, **font)
-    plt.ylim([0.0, 0.3])
-    plt.xlim([15.0, 1e3 + 170])
+    plt.ylim(ylim)
+    plt.xlim(xlim)
     plt.tick_params(axis='x', which='major', labelsize=small_size)
     plt.tick_params(axis='y', which='major', labelsize=small_size)
     if title is not None:
         # plt.title(title)
         # plt.legend()
-        plt.savefig(f'figs/{title}_k.pdf', bbox_inches='tight', pad_inches=0.2)
+        plt.savefig(f'figs/{title}_k.pdf', bbox_inches='tight', pad_inches=0.0)
         print(f'saved k: {title}')
 
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        plt.savefig(f'figs/{title}_k.png', bbox_inches='tight', pad_inches=0.2)
+        plt.savefig(f'figs/{title}_k.png', bbox_inches='tight', pad_inches=0.0)
     else:
         plt.legend()
         plt.show()
 
 
-def draw_results_f_med(results, experiments, iterations_list, title=None, d=None):
-    plt.figure(frameon=False, figsize=(8, 5))
+def draw_results_f_med(results, experiments, iterations_list, title=None, d=None, ylim=(0.0,0.2), xlim=(100, 1150)):
+    plt.figure(frameon=False, figsize=(0.5 * 8, 0.5 * 5))
 
     if d is None:
         d = {}
@@ -231,21 +267,24 @@ def draw_results_f_med(results, experiments, iterations_list, title=None, d=None
         plt.semilogx(vals['xs'], vals['ys'], label=experiment, color=color, linestyle=style, marker=marker)
 
     plt.xlabel('Mean runtime (ms)', fontsize=large_size, **font)
+
+    logscale_text_pos = 0.7 if xlim[0] == 15.0 else 0.65
+    plt.text(logscale_text_pos, -0.1, '— log. scale —', ha='center', va='center', transform=plt.gca().transAxes, fontsize=12, fontstyle='italic')
     # plt.ylabel('Median absolute $\\lambda$ error', fontsize=large_size)
     # plt.ylabel('Mean $\\epsilon(\\lambda)$', fontsize=large_size, **font)
     plt.ylabel('Median ξ(f)', fontsize=large_size, **font)
-    plt.ylim([0.0, 0.4])
-    plt.xlim([15.0, 1e3 + 170])
+    plt.ylim(ylim)
+    plt.xlim(xlim)
     plt.tick_params(axis='x', which='major', labelsize=small_size)
     plt.tick_params(axis='y', which='major', labelsize=small_size)
     if title is not None:
         # plt.legend()
         # plt.title(title)
-        plt.savefig(f'figs/{title}_f.pdf', bbox_inches='tight', pad_inches=0.2)
+        plt.savefig(f'figs/{title}_f.pdf', bbox_inches='tight', pad_inches=0.0)
         print(f'saved k: {title}')
 
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        plt.savefig(f'figs/{title}_f.png', bbox_inches='tight', pad_inches=0.2)
+        plt.savefig(f'figs/{title}_f.png', bbox_inches='tight', pad_inches=0.0)
     else:
         plt.legend()
         plt.show()
@@ -269,17 +308,17 @@ def get_experiments(eq, geo_iters=(1,2,5,30)):
         experiments.extend([f'E_3pt+Geo_V_{i}' for i in geo_iters])
     return experiments
 
-def draw_graphs(name, load=False, **kwargs):
+def draw_graphs(name, load=False, ylims=None, **kwargs):
     if load:
         with open(f'fig_data/{name}_pose.json') as f:
             d = json.load(f)
-        draw_results_pose_auc_10(None, None, None, title=name, d=d)
+        draw_results_pose_auc_10(None, None, None, title=name, d=d, ylim = ylims[0], **kwargs)
         with open(f'fig_data/{name}_k.json') as f:
             d = json.load(f)
-        draw_results_k_med(None, None, None, title=name, d=d)
+        draw_results_k_med(None, None, None, title=name, d=d, ylim = ylims[1], **kwargs)
         with open(f'fig_data/{name}_f.json') as f:
             d = json.load(f)
-        draw_results_f_med(None, None, None, title=name, d=d)
+        draw_results_f_med(None, None, None, title=name, d=d, ylim = ylims[2], **kwargs)
     else:
         with open(os.path.join('results', f'{name}.json'), 'r') as f:
             results = json.load(f)
@@ -287,16 +326,21 @@ def draw_graphs(name, load=False, **kwargs):
         experiments = get_experiments('eq' in name)
         # experiments = sorted(list(set([x['experiment'] for x in results])))
 
-        draw_results_pose_auc_10(results, experiments, iterations_list, title=name)
-        draw_results_k_med(results, experiments, iterations_list, title=name)
-        draw_results_f_med(results, experiments, iterations_list, title=name)
+        if ylims is not None:
+            draw_results_pose_auc_10(results, experiments, iterations_list, title=name, ylim=ylims[0], **kwargs)
+            draw_results_k_med(results, experiments, iterations_list, title=name, ylim=ylims[1], **kwargs)
+            draw_results_f_med(results, experiments, iterations_list, title=name, ylim=ylims[2], **kwargs)
+        else:
+            draw_results_pose_auc_10(results, experiments, iterations_list, title=name, **kwargs)
+            draw_results_k_med(results, experiments, iterations_list, title=name, **kwargs)
+            draw_results_f_med(results, experiments, iterations_list, title=name, **kwargs)
 
 if __name__ == '__main__':
-    draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG')
-    draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG_eq')
-    draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG')
-    draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG_eq')
-    draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG', load=True, xlim = [30.0, 1e3 + 150])
-    draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG_eq', load=True, xlim = [30.0, 1e3 + 150])
-    draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG', load=True, xlim = [15.0, 1e3 + 170])
-    draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG_eq', load=True, xlim = [15.0, 1e3 + 170])
+    # draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG')
+    # draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG_eq')
+    # draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG')
+    # draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG_eq')
+    draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG', load=True, xlim = [30.0, 1e3 + 150], ylims=[[0.3, 0.7], [0.05,0.25], [0.0, 0.4]])
+    draw_graphs('focal-graph-cathedral-pairs-features_superpoint_noresize_2048-LG_eq', load=True, xlim = [30.0, 1e3 + 150], ylims=[[0.5, 0.8], [0.0,0.2], [0.0, 0.2]])
+    draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG', load=True, xlim = [15.0, 1e3 + 170], ylims=[[0.1, 0.4], [0.15,0.4], [0.15,0.40]])
+    draw_graphs('focal-graph-rotunda_new-pairs-features_superpoint_noresize_2048-LG_eq', load=True, xlim = [15.0, 1e3 + 170], ylims=[[0.2, 0.6], [0.0,0.3],[0.0,0.4]])

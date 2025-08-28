@@ -130,6 +130,9 @@ def get_rows(results, order, div_by_4=False):
         times = [r['info']['runtime'] for r in exp_results]
         time_avg = np.mean(times)
 
+        if 'Geo' in experiment:
+            time_avg += 185
+
         num_rows.append([p_avg, p_med, p_auc_10, k_avg, k_med, f_avg, f_med, time_avg])
 
     text_rows = [[f'{x:0.2f}' for x in y] for y in num_rows]
@@ -137,8 +140,8 @@ def get_rows(results, order, div_by_4=False):
     arr = np.array(num_rows)
     for j in range(len(text_rows[0])):
         idxs = np.argsort(incdec[j] * arr[:, j])
-        text_rows[idxs[0]][j] = '\\textbf{' + text_rows[idxs[0]][j] + '}'
-        text_rows[idxs[1]][j] = '\\underline{' + text_rows[idxs[1]][j] + '}'
+        text_rows[idxs[0]][j] = '\\cellcolor{best}{' + text_rows[idxs[0]][j] + '}'
+        text_rows[idxs[1]][j] = '\\cellcolor{second}{' + text_rows[idxs[1]][j] + '}'
 
     max_len = np.max(lens, axis=0)
     phantoms = max_len - lens
