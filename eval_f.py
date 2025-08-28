@@ -10,7 +10,7 @@ import poselib
 from tqdm import tqdm
 
 from utils.data import get_pairs
-from utils.geometry import rotation_angle, angle, k_err, f_err, normalize
+from utils.geometry import rotation_angle, angle, k_err, f_err, normalize, force_inliers
 from utils.geometry import get_camera_dicts
 from utils.tables import print_results
 from utils.vis import draw_results_pose_auc_10
@@ -27,6 +27,7 @@ def parse_args():
     parser.add_argument('-e', '--eq', action='store_true', default=False)
     parser.add_argument('--net', action='store_true', default=False)
     parser.add_argument('-a', '--append', action='store_true', default=False)
+    parser.add_argument('-i', '--force_inliers', type=float, default=None)
     parser.add_argument('feature_file')
     parser.add_argument('dataset_path')
 
@@ -218,11 +219,19 @@ def eval(args):
 
     matches_basename = os.path.basename(args.feature_file)
 
+    if args.force_inliers is not None:
+        basename = f'{basename}-{args.force_inliers:.1f}inliers'
+
     if args.graph:
         basename = f'{basename}-graph'
         iterations_list = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
     else:
-        iterations_list = [None]
+        if args.force_inliers is not None:
+            iterations_list = [None]
+        else:
+            iterations_list = [None]
+
+
 
     if args.graph:
         if args.eq:
@@ -380,6 +389,14 @@ def eval(args):
                     net_dict = {'Geo_k1': geo_k_dict[img_name_1], 'Geo_k2': geo_k_dict[img_name_2],
                                 'Geo_f1': geo_f_dict[img_name_1], 'Geo_f2': geo_f_dict[img_name_2],
                                 'Geo_g1': geo_g_dict[img_name_1], 'Geo_g2': geo_g_dict[img_name_2]}
+
+                if args.force_inliers is not None:
+                    kp1_distorted, kp2_distorted = force_inliers(kp1_distorted, kp2_distorted,
+                                                                         R_gt, t_gt, k1, k2, K1, K2, T1, T2,
+                                                                         args.force_inliers, args.threshold)
+
+                    if len(kp1_distorted) < 11:
+                        continue
 
                 for experiment in experiments:
                     for iterations in iterations_list:

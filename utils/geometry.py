@@ -190,3 +190,81 @@ def k_err(k_gt, k_est):
 def f_err(f_gt, f_est):
     # return abs((1 / (1 + k_gt)) - (1 /(1 + k_est))) / abs(( 1 / (1 + k_gt)))
     return np.abs(f_gt - f_est) / f_gt
+
+def skew(x):
+    return np.array([[0, -x[2], x[1]], [x[2], 0, -x[0]], [-x[1], x[0], 0]])
+
+def add_rand_pts(x, multiplier):
+    x_new = np.random.rand(int(multiplier * len(x)), 2)
+    x_new[:, 0] -= 0.5
+    x_new[:, 1] -= 0.5
+    return np.row_stack([x, x_new])
+
+
+def unproject_with_jac(x, k):
+    r2 = x[0] ** 2 + x[1] ** 2
+    X = np.array([x[0], x[1], 1 + k * r2])
+    inv_norm = 1.0 / np.linalg.norm(X)
+    X = inv_norm * X
+
+    jac = np.empty([3, 2])
+
+    jac[0, 0] = 1 - X[0] * X[0] - 2 * X[0] * X[2] * k * x[0]
+    jac[0, 1] = -X[0] * (X[1] + 2 * X[2] * k * x[1])
+    jac[1, 0] = -X[1] * (X[0] + 2 * X[2] * k * x[0])
+    jac[1, 1] = 1 - X[1] * X[1] - 2 * X[1] * X[2] * k * x[1]
+    jac[2, 0] = -X[0] * X[2] + 2 * k * (-x[0]) * (X[2] * X[2] - 1)
+    jac[2, 1] = -X[1] * X[2] + 2 * k * (-x[0]) * (X[2] * X[2] - 1)
+
+    return X, jac
+
+
+
+def get_inliers_tsamp(kp1, kp2, F, k1, k2, t):
+    sq_t = t**2
+    out = np.zeros(len(kp1))
+
+    for i in range(len(kp1)):
+        d1, M1 = unproject_with_jac(kp1[i], k1)
+        d2, M2 = unproject_with_jac(kp2[i], k2)
+
+
+        C = d2.dot(F @ d1)
+        denom2 = np.linalg.norm(M2.T @ F @ d1)**2 + np.linalg.norm(M1.T @ F.T @ d2)**2
+        r2 = C * C / denom2
+
+        if (r2 < sq_t):
+            out[i] = 1.0
+        else:
+            out[i] = 0.0
+
+    return out == 1.0
+
+
+def add_rand_gs(g, multiplier):
+    g_new = np.random.randn(int(multiplier * len(g)), 3)
+    g_new /= np.linalg.norm(g_new, axis=1)
+    return np.row_stack([g, g_new])
+
+
+def force_inliers(kp1, kp2, R_gt, t_gt, k1, k2, K1, K2, T1, T2, ratio, t):
+    mean_scale = (T1[0, 0] + T2[0, 0]) / 2
+
+    f1_gt = (K1[0, 0] + K1[1, 1]) / (2 * mean_scale)
+    f2_gt = (K2[0, 0] + K2[1, 1]) / (2 * mean_scale)
+
+    K1 = np.diag([f1_gt, f1_gt, 1])
+    K2 = np.diag([f2_gt, f2_gt, 1])
+
+    F = np.linalg.inv(K2).T @ skew(t_gt.ravel()) @ R_gt @ np.linalg.inv(K1)
+
+    l = get_inliers_tsamp(kp1, kp2, F, k1, k2, t / mean_scale)
+
+    multiplier = (1 - ratio) / ratio
+
+    kp1, kp2 = kp1[l], kp2[l]
+
+    kp1 = add_rand_pts(kp1, multiplier)
+    kp2 = add_rand_pts(kp2, multiplier)
+
+    return kp1, kp2
