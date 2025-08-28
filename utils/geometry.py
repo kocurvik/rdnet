@@ -267,4 +267,4 @@ def force_inliers(kp1, kp2, R_gt, t_gt, k1, k2, K1, K2, T1, T2, ratio, t):
     kp1 = add_rand_pts(kp1, multiplier)
     kp2 = add_rand_pts(kp2, multiplier)
 
-    return kp1, kp2
+    return kp1, kp2, np.sum(l)
