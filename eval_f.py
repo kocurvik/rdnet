@@ -220,7 +220,7 @@ def eval(args):
     matches_basename = os.path.basename(args.feature_file)
 
     if args.force_inliers is not None:
-        basename = f'{basename}-{args.force_inliers:.1f}inliers'
+        basename = f'{basename}-{args.force_inliers:.2f}inliers'
 
     if args.graph:
         basename = f'{basename}-graph'
@@ -395,7 +395,7 @@ def eval(args):
                                                                          R_gt, t_gt, k1, k2, K1, K2, T1, T2,
                                                                          args.force_inliers, args.threshold)
 
-                    if len(kp1_distorted) < 11:
+                    if len(kp1_distorted) * args.force_inliers < 11:
                         continue
 
                 for experiment in experiments:
