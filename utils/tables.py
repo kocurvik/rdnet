@@ -183,8 +183,12 @@ def generate_table(dataset, i, feat, eq_only=False):
             name = name + f' - Synth {synth_char}'
 
         if i > 0:
-            neq_results_type = f'synth{synth_char}-uneq-final-pairs-features_{feat}_noresize_2048-LG-synth{i}'
-            eq_results_type = f'synth{synth_char}-eq-final-pairs-features_{feat}_noresize_2048-LG-syntheq{i}'
+            if 'pragueparks' == dataset:
+                neq_results_type = f'synth{synth_char}-uneq-pairs-features_{feat}_noresize_2048-LG-synth{i}'
+                eq_results_type = f'synth{synth_char}-eq-pairs-features_{feat}_noresize_2048-LG-syntheq{i}'
+            else:
+                neq_results_type = f'synth{synth_char}-uneq-final-pairs-features_{feat}_noresize_2048-LG-synth{i}'
+                eq_results_type = f'synth{synth_char}-eq-final-pairs-features_{feat}_noresize_2048-LG-syntheq{i}'
         else:
             neq_results_type = f'pairs-features_{feat}_noresize_2048-LG'
 
