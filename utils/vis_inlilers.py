@@ -8,7 +8,7 @@ from matplotlib.ticker import FormatStrFormatter, MaxNLocator, MultipleLocator
 
 from utils.vis import large_size, small_size, font
 
-inlier_ratios = [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]
+inlier_ratios = [1.0, 0.9, 0.8, 0.7, 0.75, 0.6, 0.5, 0.25]
 
 
 basenames = ['E_3pt', 'E_5pt', 'Efeq_6pt_s3', 'F_7pt_s3', 'kFk_9pt', 'k2Fk1_10pt', 'kFk_8pt', 'empty', 'k2k1_9pt']
@@ -59,12 +59,6 @@ def get_dict(eq_str, experiments):
             med_f = np.median(f_errs)
 
             d[exp][i] = {'med_k': med_k, 'med_f': med_f, 'AUC10': AUC10}
-
-    # for exp in experiments:
-    #     if 'Geo_V' in exp and 'VLO' not in exp:
-    #         for i in inlier_ratios[1:]:
-    #             d[exp][i]['med_k'] = d[exp][inlier_ratios[0]]['med_k']
-    #             d[exp][i]['med_f'] = d[exp][inlier_ratios[0]]['med_f']
 
     return d
 
