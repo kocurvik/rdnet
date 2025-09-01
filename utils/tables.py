@@ -142,13 +142,12 @@ def get_rows(results, order, div_by_4=False):
         text_rows[i][-1] = f'{num_rows[i][-1]:0.0f}'
         if 'Geo' in experiment:
             solver_time = num_rows[i][-1] - 2 * 185
-            ransac_time_text[i] = f'({solver_time:0.2f})'
+            ransac_time_text[i] = f'({solver_time:0.0f})'
 
-    max_ransac_time_len = max([len(x) for x in ransac_time_text])
+    max_ransac_time_len = max([len(x[-1]) for x in text_rows])
 
     for i, experiment in enumerate(order):
         if 'Geo' in experiment:
-            solver_time = num_rows[i][-1] - 2 * 185
             num_phantoms = max_ransac_time_len - len(text_rows[i][-1]) + 1
             text_rows[i][-1] = ransac_time_text[i] + f'\\phantom{{{num_phantoms * "1"}}}' + text_rows[i][-1]
 
