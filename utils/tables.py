@@ -153,7 +153,7 @@ def get_rows(results, order, div_by_4=False):
                 text_rows[i][-1] += f'\\phantom{{{num_phantoms * "1"}}}'
             text_rows[i][-1] += ransac_time_text[i]
 
-    lens = np.array([[len(x) for x in y] for y in text_rows])
+    lens = np.array([[len(x.replace('\\phantom{','').replace('}', '')) for x in y] for y in text_rows])
     arr = np.array(num_rows)
     for j in range(len(text_rows[0])):
         idxs = np.argsort(incdec[j] * arr[:, j])
