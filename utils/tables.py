@@ -136,10 +136,25 @@ def get_rows(results, order, div_by_4=False):
         num_rows.append([p_avg, p_med, p_auc_10, k_avg, k_med, f_avg, f_med, time_avg])
 
     text_rows = [[f'{x:0.2f}' for x in y] for y in num_rows]
+
+    ransac_time_text = ['' for _ in order]
     for i, experiment in enumerate(order):
         if 'Geo' in experiment:
             solver_time = num_rows[i][-1] - 2 * 185
-            text_rows[i][-1] += f' ({solver_time:0.2f})'
+            ransac_time_text[i] = f'({solver_time:0.2f})'
+
+    max_ransac_time_len = max([len(x) for x in ransac_time_text])
+
+    for i, experiment in enumerate(order):
+        if 'Geo' in experiment:
+            solver_time = num_rows[i][-1] - 2 * 185
+            num_phantoms = max_ransac_time_len - len(ransac_time_text[i])
+            if num_phantoms > 0:
+                text_rows[i][-1] += f'\\phantom{{{num_phantoms * "1"}}}'
+            text_rows[i][-1] += ransac_time_text[i]
+
+    for i, experiment in enumerate(order):
+        text_rows[i][-1] += f' ({solver_time:0.2f})'
 
     lens = np.array([[len(x) for x in y] for y in text_rows])
     arr = np.array(num_rows)
