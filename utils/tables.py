@@ -139,6 +139,7 @@ def get_rows(results, order, div_by_4=False):
 
     ransac_time_text = ['' for _ in order]
     for i, experiment in enumerate(order):
+        text_rows[i][-1] = f'{num_rows[i][-1]:0.0f}'
         if 'Geo' in experiment:
             solver_time = num_rows[i][-1] - 2 * 185
             ransac_time_text[i] = f'({solver_time:0.2f})'
