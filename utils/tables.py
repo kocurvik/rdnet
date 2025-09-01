@@ -148,10 +148,9 @@ def get_rows(results, order, div_by_4=False):
     for i, experiment in enumerate(order):
         if 'Geo' in experiment:
             solver_time = num_rows[i][-1] - 2 * 185
-            num_phantoms = max_ransac_time_len - len(ransac_time_text[i]) + 1
-            if num_phantoms > 0:
-                text_rows[i][-1] += f'\\phantom{{{num_phantoms * "1"}}}'
-            text_rows[i][-1] += ransac_time_text[i]
+            num_phantoms = max_ransac_time_len - len(text_rows[i][-1]) + 1
+            text_rows[i][-1] = ransac_time_text[i] + f'\\phantom{{{num_phantoms * "1"}}}' + text_rows[i][-1]
+
 
     lens = np.array([[len(x.replace('\\phantom{','').replace('}', '')) for x in y] for y in text_rows])
     arr = np.array(num_rows)
