@@ -136,6 +136,11 @@ def get_rows(results, order, div_by_4=False):
         num_rows.append([p_avg, p_med, p_auc_10, k_avg, k_med, f_avg, f_med, time_avg])
 
     text_rows = [[f'{x:0.2f}' for x in y] for y in num_rows]
+    for i, experiment in enumerate(order):
+        if 'Geo' in experiment:
+            solver_time = num_rows[i][-1] - 2 * 185
+            text_rows[i][-1] += f' ({solver_time:0.2f})'
+
     lens = np.array([[len(x) for x in y] for y in text_rows])
     arr = np.array(num_rows)
     for j in range(len(text_rows[0])):
