@@ -153,9 +153,6 @@ def get_rows(results, order, div_by_4=False):
                 text_rows[i][-1] += f'\\phantom{{{num_phantoms * "1"}}}'
             text_rows[i][-1] += ransac_time_text[i]
 
-    for i, experiment in enumerate(order):
-        text_rows[i][-1] += f' ({solver_time:0.2f})'
-
     lens = np.array([[len(x) for x in y] for y in text_rows])
     arr = np.array(num_rows)
     for j in range(len(text_rows[0])):
