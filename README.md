@@ -26,7 +26,7 @@ We use five datasets:
 * PragueParks - TBA
 * EuRoC MAV - TBA
 
-You can download the all used matches and GeoCalib Predictions at [here](https://cogsci.dai.fmph.uniba.sk/~kocur/rd_matches_and_geocalib_predictions.tar.gz).
+You can download all used matches and GeoCalib Predictions [here](https://415102.xyz/api/public/dl/TA_r_YMr).
 
 To prepare matches for Rotunda, Cathedral datasets you can run:
 ```shell
@@ -48,4 +48,15 @@ To run the experiments you should modify `experiments.sh` as described in the sc
 Tables and figures are generated using `utils/tables.py`, and `utils/vis.py`.
 
 ## Citation
-TBA
+```
+@article{kocur2026minimal,
+  title={Are Minimal Radial Distortion Solvers Really Necessary for Relative Pose Estimation?},
+  author={Kocur, Viktor and Tzamos, Charalambos and Ding, Yaqing and Haladova, Zuzana Berger and Sattler, Torsten and Kukelova, Zuzana},
+  journal={International Journal of Computer Vision},
+  volume={134},
+  number={2},
+  pages={48},
+  year={2026},
+  publisher={Springer}
+}
+```
