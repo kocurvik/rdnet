@@ -219,7 +219,7 @@ def eval(args):
     geo_iters = [1, 2, 5, 30]
     base_runtimes = []
     if args.eq:
-        experiments = ['Efeq_6pt', 'Efeq_6pt_s3', 'k2Fk1_10pt']
+        experiments = ['Efeq_6pt', 'Efeq_6pt_s3', 'kFk_9pt', 'k2Fk1_10pt']
         base_runtimes.extend([0, 0, 0])
         experiments.extend([f'Efeq_6pt+Geo_VLO_{i}' for i in geo_iters])
         base_runtimes.extend([geo_iter_runtime(i, eq=True) for i in geo_iters])
