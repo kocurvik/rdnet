@@ -23,7 +23,7 @@ BASELINES = {'k2Fk1_10pt': ('cTen', '*', r'10pt~\cite{kukelova2015efficient}'),
              'Efeq_6pt_s3': ('cSix', 'star', r'6pt + sampling~\cite{kocur2026minimal}')}
 SOLVER_ORDER = ['F_7pt_s3', 'Efeq_6pt_s3', 'kFk_9pt', 'k2Fk1_10pt']
 # as the main caption says: LO on the pose alone dashed, on the intrinsics too solid
-STYLES = {'E_5pt_V': 'dashed', 'E_5pt_VLO': 'solid', 'E_5pt_VLOeq': 'solid',
+STYLES = {'E_5pt_V': 'dashed', 'E_5pt_Veq': 'dashed', 'E_5pt_VLO': 'solid', 'E_5pt_VLOeq': 'solid',
           'Efeq_6pt_V': 'densely dotted', 'Efeq_6pt_VLO': 'densely dashdotted'}
 # in the legend only on the equal graph: its caption does not define the line styles
 PIPELINES = [('dashed', r'5pt~\cite{nister2004efficient}'), ('solid', '5pt + LO'),
@@ -49,6 +49,8 @@ def main():
     a = a_args = p.parse_args()
     data = read(a.csv)
     eq = any('Efeq_6pt+' in k for k in data)
+    # the final refinement keeps f and k free, on one shared camera when the cameras are equal
+    data = {k: v for k, v in data.items() if not k.endswith('_Vfix') and not (eq and k.startswith('E_5pt+') and k.endswith('_V'))}
 
     baselines = [k for k in BASELINES if k in data]
     pipes = PIPELINES if eq else PIPELINES[:2]
