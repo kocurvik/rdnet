@@ -18,7 +18,7 @@ NETWORKS = [('unik3d', 'cUni', r'UniK3D~\cite{piccinelli2025unik3d}', 'triangle*
             ('ours_ray_cnxt', 'cOursC', 'Ours ConvNeXt-T', 'square*'), ('ours_ray_vitl', 'cOursL', 'Ours ViT-L', '*')]
 LEGEND_NETWORKS = ['ours_ray_vitl', 'ours_ray_cnxt', 'anycalib_dist', 'geocalib', 'unik3d']
 BASELINES = {'k2Fk1_10pt': ('cTen', '*', r'10pt~\cite{kukelova2015efficient}'),
-             'kFk_9pt': ('cNine', '*', r'9pt~\cite{fitzgibbon2001division}'),
+             'kFk_9pt': ('cNine', '*', r'9pt~\cite{fitzgibbon2001division,kocur2026minimal}'),
              'F_7pt_s3': ('cSeven', 'star', r'7pt, 3 $\lambda$~\cite{kocur2026minimal}'),
              'Efeq_6pt_s3': ('cSix', 'star', r'6pt, 3 $\lambda$~\cite{kocur2026minimal}')}
 SOLVER_ORDER = ['F_7pt_s3', 'Efeq_6pt_s3', 'kFk_9pt', 'k2Fk1_10pt']
