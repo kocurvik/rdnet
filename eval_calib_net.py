@@ -200,10 +200,9 @@ def load_pairs(args):
         t_gt = t_dict[b] - R_gt @ t_dict[a]
         kp1, T1 = normalize(matches[:, :2], P_dict[a][0, 0], P_dict[a][1, 1])
         kp2, T2 = normalize(matches[:, 2:4], P_dict[b][0, 0], P_dict[b][1, 1])
-        scale = (T1[0, 0] + T2[0, 0]) / 2
         out.append(dict(name1=a, name2=b, kp1=kp1, kp2=kp2, T1=T1, T2=T2, R_gt=R_gt, t_gt=t_gt,
                         k1_gt=P_dict[a][2, 2], k2_gt=P_dict[b][2, 2],
-                        f1_gt=cameras[a][0, 0] / scale, f2_gt=cameras[b][0, 0] / scale))
+                        f1_gt=cameras[a][0, 0] / T1[0, 0], f2_gt=cameras[b][0, 0] / T2[0, 0]))
     return out
 
 
