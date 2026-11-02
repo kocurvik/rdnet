@@ -15,25 +15,28 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 
-# one fixed color per method (a validated categorical order: identity also in the legend and the csv), baselines in gray
+# rdnet's palette (`utils/vis.py`): seaborn's tab10, the solvers keeping their own hues (6pt green, 7pt red,
+# 9pt purple, 10pt brown); the networks take the hues rdnet's network curves had, then the unused ones
 COLORS = {
-    'ours_ray_vitl': '#2a78d6', 'ours_log_vitl': '#eb6834', 'ours_ray_cnxt': '#1baf7a', 'ours_log_cnxt': '#eda100',
-    'anycalib_dist': '#e87ba4', 'geocalib': '#008300', 'unik3d': '#6250d6',
+    'ours_ray_vitl': '#1f77b4', 'ours_log_vitl': '#17becf', 'ours_ray_cnxt': '#ff7f0e', 'ours_log_cnxt': '#bcbd22',
+    'anycalib_dist': '#e377c2', 'geocalib': '#7f7f7f', 'unik3d': '#bcbd22',
 }
 LABELS = {
     'ours_ray_vitl': 'Ours ray map ViT-L', 'ours_log_vitl': 'Ours log map ViT-L',
     'ours_ray_cnxt': 'Ours ray map ConvNeXt-T', 'ours_log_cnxt': 'Ours log map ConvNeXt-T',
     'anycalib_dist': 'AnyCalib$_\\mathrm{dist}$', 'geocalib': 'GeoCalib', 'unik3d': 'UniK3D',
 }
+# as rdnet's `get_color_style`: 'o' the non-minimal solvers, '*' the sampling ones
 BASELINES = {
-    'kFk_9pt': ('9pt $\\mathbf{F}_\\lambda$', '#0b0b0b', 'o'), 'k2Fk1_10pt': ('10pt $\\mathbf{F}_{\\lambda_1\\lambda_2}$', '#52514e', 's'),
-    'Efeq_6pt': ('6pt $\\mathbf{E}_f$, $\\lambda{=}0$', '#8a8984', '^'), 'Efeq_6pt_s3': ('6pt $\\mathbf{E}_f$, 3 $\\lambda$', '#8a8984', '*'),
-    'F_7pt': ('7pt $\\mathbf{F}$, $\\lambda{=}0$', '#8a8984', '^'), 'F_7pt_s3': ('7pt $\\mathbf{F}$, 3 $\\lambda$', '#8a8984', '*'),
+    'kFk_9pt': ('9pt $\\mathbf{F}_\\lambda$', '#9467bd', 'o'), 'k2Fk1_10pt': ('10pt $\\mathbf{F}_{\\lambda_1\\lambda_2}$', '#8c564b', 'o'),
+    'Efeq_6pt_s3': ('6pt $\\mathbf{E}_f$, 3 $\\lambda$', '#2ca02c', '*'), 'F_7pt_s3': ('7pt $\\mathbf{F}$, 3 $\\lambda$', '#d62728', '*'),
 }
+# only lambda = 0: run, not plotted (user)
+HIDDEN = ('F_7pt', 'Efeq_6pt')
 # pipeline -> line style, the method's color stays
-STYLES = {'E_5pt_V': 'solid', 'E_5pt_VLO': 'dashed', 'E_5pt_VLOeq': 'dashed',
+STYLES = {'E_5pt_V': 'solid', 'E_5pt_VLO': 'dotted', 'E_5pt_VLOeq': 'dotted',  # rdnet: LO dotted
           'Efeq_6pt_V': 'dashdot', 'Efeq_6pt_VLO': (0, (5, 1, 1, 1, 1, 1)),
-          'E_3pt_V': 'dotted', 'E_3pt_VLO': (0, (1, 1)), 'E_3pt_VLOeq': (0, (1, 1))}
+          'E_3pt_V': 'dashed', 'E_3pt_VLO': (0, (1, 1)), 'E_3pt_VLOeq': (0, (1, 1))}
 PIPELINE = {'E_5pt_V': '5pt', 'E_5pt_VLO': '5pt + LO', 'E_5pt_VLOeq': '5pt + LO', 'Efeq_6pt_V': '6pt',
             'Efeq_6pt_VLO': '6pt + LO', 'E_3pt_V': '3pt', 'E_3pt_VLO': '3pt + LO', 'E_3pt_VLOeq': '3pt + LO'}
 
@@ -60,6 +63,8 @@ def draw(directory, out, keep, ylim=None, exclude=None, suffix=''):
         if keep and not all(k in exp for k in keep):
             continue
         if exclude and any(k in exp for k in exclude):
+            continue
+        if exp in HIDDEN:
             continue
         xs, ys, ns = curve(path)
         rows.extend([exp, n, x, y] for n, x, y in zip(ns, xs, ys))
