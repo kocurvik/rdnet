@@ -51,13 +51,15 @@ def curve(path):
     return np.array(xs), np.array(ys), ns
 
 
-def draw(directory, out, keep, ylim=None):
+def draw(directory, out, keep, ylim=None, exclude=None, suffix=''):
     name = os.path.basename(directory.rstrip('/\\'))
     plt.figure(figsize=(7.5, 4.2))
     rows = []
     for path in sorted(glob.glob(os.path.join(directory, '*.npz'))):
         exp = os.path.basename(path)[:-4]
         if keep and not all(k in exp for k in keep):
+            continue
+        if exclude and any(k in exp for k in exclude):
             continue
         xs, ys, ns = curve(path)
         rows.extend([exp, n, x, y] for n, x, y in zip(ns, xs, ys))
@@ -75,13 +77,16 @@ def draw(directory, out, keep, ylim=None):
     if ylim:
         plt.ylim(ylim)
     plt.grid(True, which='major', color='#e5e4e0', linewidth=0.7)
+    ticks = [t for t in (10, 20, 50, 100, 200, 500, 1000) if plt.xlim()[0] <= t <= plt.xlim()[1]]
+    plt.xticks(ticks, [str(t) for t in ticks])
+    plt.minorticks_off()
     plt.gca().spines[['top', 'right']].set_visible(False)
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), fontsize=7, frameon=False)
     os.makedirs(out, exist_ok=True)
     for ext in ('pdf', 'png'):
-        plt.savefig(os.path.join(out, f'calib_net_{name}.{ext}'), bbox_inches='tight', pad_inches=0.02, dpi=200)
+        plt.savefig(os.path.join(out, f'calib_net_{name}{suffix}.{ext}'), bbox_inches='tight', pad_inches=0.02, dpi=200)
     plt.close()
-    with open(os.path.join(out, f'calib_net_{name}.csv'), 'w', newline='') as f:
+    with open(os.path.join(out, f'calib_net_{name}{suffix}.csv'), 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(['experiment', 'iterations', 'runtime_ms', 'mAA10'])
         writer.writerows(rows)
@@ -94,6 +99,8 @@ if __name__ == '__main__':
     p.add_argument('--out', default='figs')
     p.add_argument('--keep', nargs='*', default=None)
     p.add_argument('--ylim', nargs=2, type=float, default=None)
+    p.add_argument('--exclude', nargs='*', default=None, help='leave out curves containing any of these')
+    p.add_argument('--suffix', default='', help='added to the output file names')
     a = p.parse_args()
     for d in a.dirs:
-        draw(d, a.out, a.keep, a.ylim)
+        draw(d, a.out, a.keep, a.ylim, a.exclude, a.suffix)
