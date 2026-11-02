@@ -50,7 +50,9 @@ def main():
     data = read(a.csv)
     eq = any('Efeq_6pt+' in k for k in data)
     # the final refinement keeps f and k free, on one shared camera when the cameras are equal
-    data = {k: v for k, v in data.items() if not k.endswith('_Vfix') and not (eq and k.startswith('E_5pt+') and k.endswith('_V'))}
+    data = {k: v for k, v in data.items() if not k.endswith('_Vfix') and not (eq and k.startswith('E_5pt+') and k.endswith('_V'))
+            # the equal graph: only the sampling variant of 6pt, no 10pt (user)
+            and not (eq and (k.startswith('Efeq_6pt+') or k in ('Efeq_6pt', 'k2Fk1_10pt')))}
 
     baselines = [k for k in BASELINES if k in data]
     pipes = PIPELINES if eq else PIPELINES[:2]
@@ -96,7 +98,7 @@ def main():
     lines = [sample(f'black!75, {st}, line width={WIDTH[st]}pt') + r'\,' + label for st, label in pipes]
     solvers = [sample(f'{BASELINES[k][0]}, line width=0.8pt, mark={BASELINES[k][1]}, mark size=0.8pt') + r'\,' + BASELINES[k][2]
                for k in SOLVER_ORDER if k in baselines]
-    rows = [row(networks[:2]), row(networks[2:]), row(lines), row(solvers)] if eq else [row(networks[:2]), row(networks[2:]), row(solvers)]
+    rows = [row(networks[:2]), row(networks[2:]), row(solvers)]
     out += [r'\node[anchor=south, inner sep=0pt, yshift=3pt] at (ax.outer north) {\footnotesize\begin{tabular}{@{}c@{}}']
     out += [' ' + r + r' \\' for r in rows[:-1]] + [' ' + rows[-1]]
     out += [r'\end{tabular}};']
