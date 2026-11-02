@@ -18,12 +18,12 @@ from matplotlib import pyplot as plt
 # rdnet's palette (`utils/vis.py`): seaborn's tab10, the solvers keeping their own hues (6pt green, 7pt red,
 # 9pt purple, 10pt brown); the networks take the hues rdnet's network curves had, then the unused ones
 COLORS = {
-    'ours_ray_vitl': '#1f77b4', 'ours_log_vitl': '#17becf', 'ours_ray_cnxt': '#ff7f0e', 'ours_log_cnxt': '#bcbd22',
+    'ours_ray_vitl': '#1f77b4', 'ours_log_vitl': '#17becf', 'ours_ray_cnxt': '#ff7f0e', 'ours_log_cnxt': '#bcbd22', 'ours_ray_vitb': '#ff7f0e',
     'anycalib_dist': '#e377c2', 'geocalib': '#7f7f7f', 'unik3d': '#bcbd22',
 }
 LABELS = {
     'ours_ray_vitl': 'Ours ray map ViT-L', 'ours_log_vitl': 'Ours log map ViT-L',
-    'ours_ray_cnxt': 'Ours ray map ConvNeXt-T', 'ours_log_cnxt': 'Ours log map ConvNeXt-T',
+    'ours_ray_cnxt': 'Ours ray map ConvNeXt-T', 'ours_log_cnxt': 'Ours log map ConvNeXt-T', 'ours_ray_vitb': 'Ours ray map ViT-B',
     'anycalib_dist': 'AnyCalib$_\\mathrm{dist}$', 'geocalib': 'GeoCalib', 'unik3d': 'UniK3D',
 }
 # as rdnet's `get_color_style`: 'o' the non-minimal solvers, '*' the sampling ones
