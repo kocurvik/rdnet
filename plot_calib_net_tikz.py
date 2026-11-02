@@ -13,17 +13,18 @@ import csv
 COLORS = {'cOursL': '1f77b4', 'cOursC': 'ff7f0e', 'cAny': 'e377c2', 'cGeo': '7f7f7f', 'cUni': 'bcbd22',
           'cSix': '2ca02c', 'cSeven': 'd62728', 'cNine': '9467bd', 'cTen': '8c564b'}
 # drawn in this order, the last on top
-NETWORKS = [('unik3d', 'cUni', 'UniK3D', 'triangle*'), ('geocalib', 'cGeo', 'GeoCalib', 'pentagon*'),
-            ('anycalib_dist', 'cAny', r'AnyCalib$_\text{dist}$', 'diamond*'),
-            ('ours_ray_cnxt', 'cOursC', 'Ours, ConvNeXt-T', 'square*'), ('ours_ray_vitl', 'cOursL', 'Ours, ViT-L', '*')]
+NETWORKS = [('unik3d', 'cUni', r'UniK3D~\cite{piccinelli2025unik3d}', 'triangle*'), ('geocalib', 'cGeo', r'GeoCalib~\cite{veicht2024geocalib}', 'pentagon*'),
+            ('anycalib_dist', 'cAny', r'AnyCalib$_\text{dist}$~\cite{tirado2025anycalib}', 'diamond*'),
+            ('ours_ray_cnxt', 'cOursC', 'Ours ConvNeXt-T', 'square*'), ('ours_ray_vitl', 'cOursL', 'Ours ViT-L', '*')]
 LEGEND_NETWORKS = ['ours_ray_vitl', 'ours_ray_cnxt', 'anycalib_dist', 'geocalib', 'unik3d']
-BASELINES = {'k2Fk1_10pt': ('cTen', '*', r'10pt $\mathbf{F}_{\lambda_1\lambda_2}$'),
-             'kFk_9pt': ('cNine', '*', r'9pt $\mathbf{F}_\lambda$'),
-             'F_7pt_s3': ('cSeven', 'star', r'7pt $\mathbf{F}$, 3 $\lambda$'),
-             'Efeq_6pt_s3': ('cSix', 'star', r'6pt $\mathbf{E}_f$, 3 $\lambda$')}
+BASELINES = {'k2Fk1_10pt': ('cTen', '*', r'10pt~\cite{kukelova2015efficient}'),
+             'kFk_9pt': ('cNine', '*', r'9pt~\cite{fitzgibbon2001division}'),
+             'F_7pt_s3': ('cSeven', 'star', r'7pt, 3 $\lambda$~\cite{kocur2026minimal}'),
+             'Efeq_6pt_s3': ('cSix', 'star', r'6pt, 3 $\lambda$~\cite{kocur2026minimal}')}
+SOLVER_ORDER = ['F_7pt_s3', 'Efeq_6pt_s3', 'kFk_9pt', 'k2Fk1_10pt']
 STYLES = {'E_5pt_V': 'solid', 'E_5pt_VLO': 'densely dotted', 'E_5pt_VLOeq': 'densely dotted',
           'Efeq_6pt_V': 'dashed', 'Efeq_6pt_VLO': 'densely dashdotted'}
-PIPELINES = [('solid', '5pt'), ('densely dotted', '5pt + LO'), ('dashed', '6pt'), ('densely dashdotted', '6pt + LO')]
+PIPELINES = [('solid', r'5pt~\cite{nister2004efficient}'), ('densely dotted', '5pt + LO'), ('dashed', '6pt'), ('densely dashdotted', '6pt + LO')]
 WIDTH = {'solid': 0.8, 'dashed': 0.7, 'densely dotted': 0.9, 'densely dashdotted': 0.7}
 
 
@@ -78,26 +79,22 @@ def main():
                            rf'coordinates {{{coords(v)}}};')
     out.append(r'\end{axis}')
 
-    # the legend: one grid, a gap between the networks, the pipelines and the solvers
+    # the legend, above the plot: the networks in one row, the pipelines and solvers below them
     def sample(style):
-        return (rf'\tikz[baseline=-0.6ex]\draw[{style}, mark indices={{2}}] plot coordinates {{(0,0) (0.25,0) (0.5,0)}};')
+        return rf'\tikz[baseline=-0.6ex]\draw[{style}, mark indices={{2}}] plot coordinates {{(0,0) (0.2,0) (0.4,0)}};'
+
+    def row(items):
+        return r'\hspace{6pt}'.join(r'\mbox{' + i + '}' for i in items)
 
     nets = {n: (c, label, m) for n, c, label, m in NETWORKS}
-    groups = [
-        [sample(f'{nets[n][0]}, line width=0.8pt, mark={nets[n][2]}, mark size=1.1pt') + '~' + nets[n][1] for n in LEGEND_NETWORKS],
-        [sample(f'black!75, {st}, line width={WIDTH[st]}pt') + '~' + label for st, label in pipes],
-        [sample(f'{BASELINES[k][0]}, line width=0.8pt, mark={BASELINES[k][1]}, mark size=1.2pt') + '~' + BASELINES[k][2] for k in baselines],
-    ]
-    rows = []
-    for j, g in enumerate(groups):
-        n = 2 if j == 1 else 3  # the pipelines pair up
-        chunk = [g[i:i + n] for i in range(0, len(g), n)]
-        for i, r in enumerate(chunk):
-            r = r + [''] * (3 - len(r))
-            rows.append(' & '.join(r) + (r' \\[2.5pt]' if i == len(chunk) - 1 else r' \\'))
-    rows[-1] = rows[-1].replace(r' \\[2.5pt]', '')
-    out += [r'\node[anchor=north, inner sep=0pt, yshift=-3pt] at (ax.outer south) {\scriptsize\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.05}%',
-            r'\begin{tabular}{@{}lll@{}}'] + rows + [r'\end{tabular}};']
+    networks = [sample(f'{nets[n][0]}, line width=0.8pt, mark={nets[n][2]}, mark size=1.1pt') + r'\,' + nets[n][1] for n in LEGEND_NETWORKS]
+    lines = [sample(f'black!75, {st}, line width={WIDTH[st]}pt') + r'\,' + label for st, label in pipes]
+    solvers = [sample(f'{BASELINES[k][0]}, line width=0.8pt, mark={BASELINES[k][1]}, mark size=1.2pt') + r'\,' + BASELINES[k][2]
+               for k in SOLVER_ORDER if k in baselines]
+    rows = [row(networks), row(lines), row(solvers)] if eq else [row(networks), row(lines + solvers)]
+    out += [r'\node[anchor=south, inner sep=0pt, yshift=3pt] at (ax.outer north) {\resizebox{\linewidth}{!}{\scriptsize\begin{tabular}{@{}c@{}}']
+    out += [' ' + r + r' \\' for r in rows[:-1]] + [' ' + rows[-1]]
+    out += [r'\end{tabular}}};']
     out += [r'\end{tikzpicture}', '']
     open(a_args.out, 'w', newline='\n').write('\n'.join(out))
     print('wrote', a_args.out, len(data), 'curves')
