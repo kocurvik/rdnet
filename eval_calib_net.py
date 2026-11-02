@@ -12,8 +12,9 @@ Experiments, as in `eval_graph.py`:
     equal intrinsics (-e)  kFk_9pt, k2Fk1_10pt, Efeq_6pt, Efeq_6pt_s3;
                            E_5pt+<net>_{V,VLOeq}; Efeq_6pt+<net>_{V,VLO}
 
-V keeps the network's camera, VLO refines f and k in local optimization, VLOeq refines one shared
-camera. On the equal graph a network gives one (f, lambda) per pair, its joint fit.
+Vfix keeps the network's camera throughout. V: the same in RANSAC and local optimization, but the final
+refinement also frees f and k (as `eval_graph.py`'s `_V`), and only its pose is kept. VLO refines f and k in
+local optimization too, VLOeq refines one shared camera. On the equal graph a network gives one (f, lambda) per pair, its joint fit.
 
 A network's time per pair goes in `base_ms`, measured in one job by `rd_predict.py`:
 2 (net + fit) on different intrinsics, 2 net + joint fit on equal ones.
@@ -70,7 +71,7 @@ def get_experiments(eq, methods):
         experiments = ['k2Fk1_10pt', 'F_7pt', 'F_7pt_s3']
     lo = 'VLOeq' if eq else 'VLO'
     for method in methods:
-        experiments.extend([f'E_5pt+{method}_V', f'E_5pt+{method}_{lo}'])
+        experiments.extend([f'E_5pt+{method}_V', f'E_5pt+{method}_{lo}', f'E_5pt+{method}_Vfix'])
         if eq:
             experiments.extend([f'Efeq_6pt+{method}_V', f'Efeq_6pt+{method}_VLO'])
         if method in GRAVITY_METHODS:
@@ -131,8 +132,9 @@ def run(task):
     ransac_dict = {'max_iterations': iters, 'max_epipolar_error': t / mean_scale, 'progressive_sampling': False,
                    'min_iterations': iters}
     shared = solver in ('kFk_9pt', 'Efeq_6pt', 'Efeq_6pt_s3') or use == 'VLOeq'
-    bundle_dict = {'refine_pose': True, 'refine_focal_length': True, 'refine_principal_point': False,
-                   'refine_extra_params': True, 'max_iterations': 100}
+    free = use != 'Vfix'  # Vfix: the final refinement on the pose alone
+    bundle_dict = {'refine_pose': True, 'refine_focal_length': free, 'refine_principal_point': False,
+                   'refine_extra_params': free, 'max_iterations': 100}
     opt_dict = {'max_error': 3.0 / mean_scale, 'ransac': ransac_dict, 'bundle': bundle_dict,
                 'shared_intrinsics': shared, 'use_minimal': False, 'tangent_sampson': True}
 
@@ -148,7 +150,7 @@ def run(task):
         dict1 = {'model': 'SIMPLE_DIVISION', 'width': -1, 'height': -1, 'params': cam1}
         dict2 = {'model': 'SIMPLE_DIVISION', 'width': -1, 'height': -1, 'params': cam2}
         start = perf_counter()
-        if use == 'V':
+        if use in ('V', 'Vfix'):
             pose, info = poselib.estimate_relative_pose(kp1, kp2, dict1, dict2, opt_dict, g1, g2)
             ransac_ms = 1000 * (perf_counter() - start)
             image_pair = poselib.ImagePair(pose, poselib.Camera('SIMPLE_DIVISION', cam1, -1, -1),

@@ -20,6 +20,7 @@ for eq in 0 1; do
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=64
+#SBATCH --exclusive
 #SBATCH -G 0
 #SBATCH --time=8:00:00
 #SBATCH --mem=64GB

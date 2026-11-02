@@ -34,10 +34,10 @@ BASELINES = {
 # only lambda = 0: run, not plotted (user)
 HIDDEN = ('F_7pt', 'Efeq_6pt')
 # pipeline -> line style, the method's color stays
-STYLES = {'E_5pt_V': 'solid', 'E_5pt_VLO': 'dotted', 'E_5pt_VLOeq': 'dotted',  # rdnet: LO dotted
+STYLES = {'E_5pt_Vfix': (0, (1, 3)), 'E_5pt_V': 'solid', 'E_5pt_VLO': 'dotted', 'E_5pt_VLOeq': 'dotted',  # rdnet: LO dotted
           'Efeq_6pt_V': 'dashdot', 'Efeq_6pt_VLO': (0, (5, 1, 1, 1, 1, 1)),
           'E_3pt_V': 'dashed', 'E_3pt_VLO': (0, (1, 1)), 'E_3pt_VLOeq': (0, (1, 1))}
-PIPELINE = {'E_5pt_V': '5pt', 'E_5pt_VLO': '5pt + LO', 'E_5pt_VLOeq': '5pt + LO', 'Efeq_6pt_V': '6pt',
+PIPELINE = {'E_5pt_Vfix': '5pt, fixed', 'E_5pt_V': '5pt', 'E_5pt_VLO': '5pt + LO', 'E_5pt_VLOeq': '5pt + LO', 'Efeq_6pt_V': '6pt',
             'Efeq_6pt_VLO': '6pt + LO', 'E_3pt_V': '3pt', 'E_3pt_VLO': '3pt + LO', 'E_3pt_VLOeq': '3pt + LO'}
 
 
