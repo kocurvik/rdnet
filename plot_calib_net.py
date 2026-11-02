@@ -15,10 +15,10 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 
-# one fixed color per method (validated: `dataviz` skill's categorical order), baselines in gray
+# one fixed color per method (a validated categorical order: identity also in the legend and the csv), baselines in gray
 COLORS = {
-    'ours_ray_vitl': '#2a78d6', 'ours_log_vitl': '#6250d6', 'ours_ray_cnxt': '#1baf7a', 'ours_log_cnxt': '#008300',
-    'anycalib_dist': '#eb6834', 'geocalib': '#eda100', 'unik3d': '#e87ba4',
+    'ours_ray_vitl': '#2a78d6', 'ours_log_vitl': '#eb6834', 'ours_ray_cnxt': '#1baf7a', 'ours_log_cnxt': '#eda100',
+    'anycalib_dist': '#e87ba4', 'geocalib': '#008300', 'unik3d': '#6250d6',
 }
 LABELS = {
     'ours_ray_vitl': 'Ours ray map ViT-L', 'ours_log_vitl': 'Ours log map ViT-L',
