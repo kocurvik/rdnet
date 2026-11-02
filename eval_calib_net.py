@@ -8,10 +8,9 @@ runs PoseLib over RANSAC budgets, one file per experiment, so a killed job resum
 Experiments, as in `eval_graph.py`:
 
     different intrinsics   k2Fk1_10pt, F_7pt, F_7pt_s3;
-                           E_5pt+<net>_{V,VLO}; E_3pt+geocalib_{V,VLO}
+                           E_5pt+<net>_{V,VLO}
     equal intrinsics (-e)  kFk_9pt, k2Fk1_10pt, Efeq_6pt, Efeq_6pt_s3;
-                           E_5pt+<net>_{V,VLOeq}; Efeq_6pt+<net>_{V,VLO};
-                           E_3pt+geocalib_{V,VLOeq}
+                           E_5pt+<net>_{V,VLOeq}; Efeq_6pt+<net>_{V,VLO}
 
 V keeps the network's camera, VLO refines f and k in local optimization, VLOeq refines one shared
 camera. On the equal graph a network gives one (f, lambda) per pair, its joint fit.
@@ -41,7 +40,7 @@ from utils.geometry import rotation_angle, angle, normalize, get_camera_dicts
 
 METHODS = ['geocalib', 'unik3d', 'anycalib_dist', 'ours_ray_vitl', 'ours_log_vitl', 'ours_ray_cnxt', 'ours_log_cnxt']
 ITERATIONS = [10, 20, 50, 100, 200, 500, 1000]
-GRAVITY_METHODS = ['geocalib']
+GRAVITY_METHODS = []  # E_3pt curves: dropped (user), the code stays
 
 COLUMNS = ['pair', 'iterations', 'R_err', 't_err', 'k1', 'k2', 'k1_gt', 'k2_gt', 'f1', 'f2', 'f1_gt', 'f2_gt',
            'ransac_ms', 'base_ms', 'inlier_ratio', 'num_inliers']
