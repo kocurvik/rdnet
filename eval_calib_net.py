@@ -14,7 +14,8 @@ Experiments, as in `eval_graph.py`:
 
 Vfix keeps the network's camera throughout. V: the same in RANSAC and local optimization, but the final
 refinement also frees f and k (as `eval_graph.py`'s `_V`), and only its pose is kept. VLO refines f and k in
-local optimization too, VLOeq refines one shared camera. On the equal graph a network gives one (f, lambda) per pair, its joint fit.
+local optimization too, VLOeq refines one shared camera. Veq: V with the final refinement on one shared camera
+(V on the equal graph frees each image's f and k separately). On the equal graph a network gives one (f, lambda) per pair, its joint fit.
 
 A network's time per pair goes in `base_ms`, measured in one job by `rd_predict.py`:
 2 (net + fit) on different intrinsics, 2 net + joint fit on equal ones.
@@ -73,7 +74,7 @@ def get_experiments(eq, methods):
     for method in methods:
         experiments.extend([f'E_5pt+{method}_V', f'E_5pt+{method}_{lo}', f'E_5pt+{method}_Vfix'])
         if eq:
-            experiments.extend([f'Efeq_6pt+{method}_V', f'Efeq_6pt+{method}_VLO'])
+            experiments.extend([f'E_5pt+{method}_Veq', f'Efeq_6pt+{method}_V', f'Efeq_6pt+{method}_VLO'])
         if method in GRAVITY_METHODS:
             experiments.extend([f'E_3pt+{method}_V', f'E_3pt+{method}_{lo}'])
     return experiments
@@ -131,7 +132,7 @@ def run(task):
 
     ransac_dict = {'max_iterations': iters, 'max_epipolar_error': t / mean_scale, 'progressive_sampling': False,
                    'min_iterations': iters}
-    shared = solver in ('kFk_9pt', 'Efeq_6pt', 'Efeq_6pt_s3') or use == 'VLOeq'
+    shared = solver in ('kFk_9pt', 'Efeq_6pt', 'Efeq_6pt_s3') or use in ('VLOeq', 'Veq')
     free = use != 'Vfix'  # Vfix: the final refinement on the pose alone
     bundle_dict = {'refine_pose': True, 'refine_focal_length': free, 'refine_principal_point': False,
                    'refine_extra_params': free, 'max_iterations': 100}
@@ -150,7 +151,7 @@ def run(task):
         dict1 = {'model': 'SIMPLE_DIVISION', 'width': -1, 'height': -1, 'params': cam1}
         dict2 = {'model': 'SIMPLE_DIVISION', 'width': -1, 'height': -1, 'params': cam2}
         start = perf_counter()
-        if use in ('V', 'Vfix'):
+        if use in ('V', 'Veq', 'Vfix'):
             pose, info = poselib.estimate_relative_pose(kp1, kp2, dict1, dict2, opt_dict, g1, g2)
             ransac_ms = 1000 * (perf_counter() - start)
             image_pair = poselib.ImagePair(pose, poselib.Camera('SIMPLE_DIVISION', cam1, -1, -1),
