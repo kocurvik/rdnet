@@ -13,8 +13,10 @@ import csv
 COLORS = {'cOursL': '1f77b4', 'cOursC': 'ff7f0e', 'cAny': 'e377c2', 'cGeo': '7f7f7f', 'cUni': 'bcbd22',
           'cSix': '2ca02c', 'cSeven': 'd62728', 'cNine': '9467bd', 'cTen': '8c564b'}
 # drawn in this order, the last on top
-NETWORKS = [('unik3d', 'cUni', 'UniK3D'), ('geocalib', 'cGeo', 'GeoCalib'), ('anycalib_dist', 'cAny', r'AnyCalib$_\text{dist}$'),
-            ('ours_ray_cnxt', 'cOursC', 'Ours, ConvNeXt-T'), ('ours_ray_vitl', 'cOursL', 'Ours, ViT-L')]
+NETWORKS = [('unik3d', 'cUni', 'UniK3D', 'triangle*'), ('geocalib', 'cGeo', 'GeoCalib', 'pentagon*'),
+            ('anycalib_dist', 'cAny', r'AnyCalib$_\text{dist}$', 'diamond*'),
+            ('ours_ray_cnxt', 'cOursC', 'Ours, ConvNeXt-T', 'square*'), ('ours_ray_vitl', 'cOursL', 'Ours, ViT-L', '*')]
+LEGEND_NETWORKS = ['ours_ray_vitl', 'ours_ray_cnxt', 'anycalib_dist', 'geocalib', 'unik3d']
 BASELINES = {'k2Fk1_10pt': ('cTen', '*', r'10pt $\mathbf{F}_{\lambda_1\lambda_2}$'),
              'kFk_9pt': ('cNine', '*', r'9pt $\mathbf{F}_\lambda$'),
              'F_7pt_s3': ('cSeven', 'star', r'7pt $\mathbf{F}$, 3 $\lambda$'),
@@ -40,18 +42,12 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('csv')
     p.add_argument('out')
-    a = p.parse_args()
+    a = a_args = p.parse_args()
     data = read(a.csv)
     eq = any('Efeq_6pt+' in k for k in data)
 
     baselines = [k for k in BASELINES if k in data]
     pipes = PIPELINES if eq else PIPELINES[:2]
-    columns = [
-        [(f'{c}, line width=1pt', label) for _, c, label in reversed(NETWORKS)],
-        [(f'black!75, {s}, line width={WIDTH[s]}pt', label) for s, label in pipes],
-        [(f'{BASELINES[k][0]}, line width=0.8pt, mark={BASELINES[k][1]}, mark size=1.2pt', BASELINES[k][2]) for k in baselines],
-    ]
-    rows = max(len(c) for c in columns)
 
     ys = [y for v in data.values() for _, y in v]
     xs = [x for v in data.values() for x, _ in v]
@@ -68,28 +64,43 @@ def main():
             r'  xlabel style={yshift=2pt}, ylabel style={yshift=-3pt},',
             r'  axis lines=left, axis line style={-, line width=0.4pt}, tick style={black, line width=0.4pt}, tick align=outside,',
             r'  major tick length=2pt, grid=major, grid style={black!12, line width=0.3pt},',
-            r'  clip mode=individual, legend cell align=left, transpose legend, legend columns=' + str(rows) + ',',
-            r'  legend style={at={(0.46,-0.17)}, anchor=north, draw=none, font=\scriptsize, /tikz/every even column/.append style={column sep=5pt},',
-            r'    row sep=-1pt, inner sep=0pt},',
-            r'  legend image post style={xscale=0.85},',
+            r'  clip mode=individual, name=ax,',
             r']']
-    for column in columns:
-        for style, label in column:
-            out += [rf'\addlegendimage{{{style}}}', rf'\addlegendentry{{{label}}}']
-        for _ in range(rows - len(column)):
-            out += [r'\addlegendimage{empty legend}', r'\addlegendentry{}']
     for k in baselines:
         c, m, _ = BASELINES[k]
-        out.append(rf'\addplot[forget plot, {c}, line width=0.8pt, mark={m}, mark size=1.2pt] coordinates {{{coords(data[k])}}};')
-    for method, c, _ in NETWORKS:
+        out.append(rf'\addplot[{c}, line width=0.8pt, mark={m}, mark size=1.2pt] coordinates {{{coords(data[k])}}};')
+    for method, c, _, m in NETWORKS:
         for k, v in sorted(data.items()):
             if '+' in k and k.split('+')[1].rsplit('_', 1)[0] == method:
                 solver, net = k.split('+')
                 s = STYLES[f'{solver}_{net.rsplit("_", 1)[1]}']
-                out.append(rf'\addplot[forget plot, {c}, {s}, line width={WIDTH[s]}pt] coordinates {{{coords(v)}}};')
-    out += [r'\end{axis}', r'\end{tikzpicture}', '']
-    open(a.out, 'w', newline='\n').write('\n'.join(out))
-    print('wrote', a.out, len(data), 'curves')
+                out.append(rf'\addplot[{c}, {s}, line width={WIDTH[s]}pt, mark={m}, mark size=0.9pt, mark options={{solid}}] '
+                           rf'coordinates {{{coords(v)}}};')
+    out.append(r'\end{axis}')
+
+    # the legend: one grid, a gap between the networks, the pipelines and the solvers
+    def sample(style):
+        return (rf'\tikz[baseline=-0.6ex]\draw[{style}, mark indices={{2}}] plot coordinates {{(0,0) (0.25,0) (0.5,0)}};')
+
+    nets = {n: (c, label, m) for n, c, label, m in NETWORKS}
+    groups = [
+        [sample(f'{nets[n][0]}, line width=0.8pt, mark={nets[n][2]}, mark size=1.1pt') + '~' + nets[n][1] for n in LEGEND_NETWORKS],
+        [sample(f'black!75, {st}, line width={WIDTH[st]}pt') + '~' + label for st, label in pipes],
+        [sample(f'{BASELINES[k][0]}, line width=0.8pt, mark={BASELINES[k][1]}, mark size=1.2pt') + '~' + BASELINES[k][2] for k in baselines],
+    ]
+    rows = []
+    for j, g in enumerate(groups):
+        n = 2 if j == 1 else 3  # the pipelines pair up
+        chunk = [g[i:i + n] for i in range(0, len(g), n)]
+        for i, r in enumerate(chunk):
+            r = r + [''] * (3 - len(r))
+            rows.append(' & '.join(r) + (r' \\[2.5pt]' if i == len(chunk) - 1 else r' \\'))
+    rows[-1] = rows[-1].replace(r' \\[2.5pt]', '')
+    out += [r'\node[anchor=north, inner sep=0pt, yshift=-3pt] at (ax.outer south) {\scriptsize\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.05}%',
+            r'\begin{tabular}{@{}lll@{}}'] + rows + [r'\end{tabular}};']
+    out += [r'\end{tikzpicture}', '']
+    open(a_args.out, 'w', newline='\n').write('\n'.join(out))
+    print('wrote', a_args.out, len(data), 'curves')
 
 
 if __name__ == '__main__':
