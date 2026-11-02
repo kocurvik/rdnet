@@ -22,10 +22,13 @@ BASELINES = {'k2Fk1_10pt': ('cTen', '*', r'10pt~\cite{kukelova2015efficient}'),
              'F_7pt_s3': ('cSeven', 'star', r'7pt, 3 $\lambda$~\cite{kocur2026minimal}'),
              'Efeq_6pt_s3': ('cSix', 'star', r'6pt, 3 $\lambda$~\cite{kocur2026minimal}')}
 SOLVER_ORDER = ['F_7pt_s3', 'Efeq_6pt_s3', 'kFk_9pt', 'k2Fk1_10pt']
-STYLES = {'E_5pt_V': 'solid', 'E_5pt_VLO': 'densely dotted', 'E_5pt_VLOeq': 'densely dotted',
-          'Efeq_6pt_V': 'dashed', 'Efeq_6pt_VLO': 'densely dashdotted'}
-PIPELINES = [('solid', r'5pt~\cite{nister2004efficient}'), ('densely dotted', '5pt + LO'), ('dashed', '6pt'), ('densely dashdotted', '6pt + LO')]
-WIDTH = {'solid': 0.8, 'dashed': 0.7, 'densely dotted': 0.9, 'densely dashdotted': 0.7}
+# as the main caption says: LO on the pose alone dashed, on the intrinsics too solid
+STYLES = {'E_5pt_V': 'dashed', 'E_5pt_VLO': 'solid', 'E_5pt_VLOeq': 'solid',
+          'Efeq_6pt_V': 'densely dotted', 'Efeq_6pt_VLO': 'densely dashdotted'}
+# in the legend only on the equal graph: its caption does not define the line styles
+PIPELINES = [('dashed', r'5pt~\cite{nister2004efficient}'), ('solid', '5pt + LO'),
+             ('densely dotted', '6pt'), ('densely dashdotted', '6pt + LO')]
+WIDTH = {'solid': 0.8, 'dashed': 0.8, 'densely dotted': 0.9, 'densely dashdotted': 0.7}
 
 
 def read(path):
@@ -91,8 +94,8 @@ def main():
     lines = [sample(f'black!75, {st}, line width={WIDTH[st]}pt') + r'\,' + label for st, label in pipes]
     solvers = [sample(f'{BASELINES[k][0]}, line width=0.8pt, mark={BASELINES[k][1]}, mark size=0.8pt') + r'\,' + BASELINES[k][2]
                for k in SOLVER_ORDER if k in baselines]
-    rows = [row(networks[:2]), row(networks[2:]), row(lines), row(solvers)] if eq else [row(networks[:2]), row(networks[2:]), row(lines + solvers)]
-    out += [r'\node[anchor=south, inner sep=0pt, yshift=3pt] at (ax.outer north) {\scriptsize\begin{tabular}{@{}c@{}}']
+    rows = [row(networks[:2]), row(networks[2:]), row(lines), row(solvers)] if eq else [row(networks[:2]), row(networks[2:]), row(solvers)]
+    out += [r'\node[anchor=south, inner sep=0pt, yshift=3pt] at (ax.outer north) {\footnotesize\begin{tabular}{@{}c@{}}']
     out += [' ' + r + r' \\' for r in rows[:-1]] + [' ' + rows[-1]]
     out += [r'\end{tabular}};']
     out += [r'\end{tikzpicture}', '']
