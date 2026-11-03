@@ -13,7 +13,7 @@ import csv
 COLORS = {'cOursL': '1f77b4', 'cOursC': 'ff7f0e', 'cAny': 'e377c2', 'cAnyO': '17becf', 'cGeo': '7f7f7f', 'cUni': 'bcbd22',
           'cSix': '2ca02c', 'cSeven': 'd62728', 'cNine': '9467bd', 'cTen': '8c564b'}
 # drawn in this order, the last on top
-NETWORKS = [('unik3d', 'cUni', r'UniK3D~\cite{piccinelli2025unik3d}', 'triangle*'), ('geocalib', 'cGeo', r'GeoCalib~\cite{veicht2024geocalib}', 'pentagon*'),
+NETWORKS = [('unik3d', 'cUni', r'UniK3D~\cite{piccinelli2025unik3d}', 'triangle*'), ('geocalib', 'cGeo', r'GeoCalib$_\text{dist}$~\cite{veicht2024geocalib}', 'pentagon*'),
             ('anycalib_dist', 'cAny', r'AnyCalib$_\text{dist}$~\cite{tirado2025anycalib}', 'diamond*'),
             ('anycalib_ours', 'cAnyO', r'AnyCalib$_\text{ours}$', 'diamond'),
             ('ours_ray_vitb', 'cOursC', 'Ours ViT-B', 'square*'), ('ours_ray_vitl', 'cOursL', 'Ours ViT-L', '*')]
