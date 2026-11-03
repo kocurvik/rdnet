@@ -17,7 +17,7 @@ NETWORKS = [('unik3d', 'cUni', r'UniK3D~\cite{piccinelli2025unik3d}', 'triangle*
             ('anycalib_dist', 'cAny', r'AnyCalib$_\text{dist}$~\cite{tirado2025anycalib}', 'diamond*'),
             ('anycalib_ours', 'cAnyO', r'AnyCalib$_\text{ours}$', 'diamond'),
             ('ours_ray_vitb', 'cOursC', 'Ours ViT-B', 'square*'), ('ours_ray_vitl', 'cOursL', 'Ours ViT-L', '*')]
-LEGEND_NETWORKS = ['ours_ray_vitl', 'ours_ray_vitb', 'anycalib_dist', 'anycalib_ours', 'geocalib', 'unik3d']
+LEGEND_NETWORKS = ['ours_ray_vitl', 'ours_ray_vitb', 'anycalib_ours', 'anycalib_dist', 'geocalib', 'unik3d']
 BASELINES = {'k2Fk1_10pt': ('cTen', '*', r'10pt~\cite{kukelova2015efficient}'),
              'kFk_9pt': ('cNine', '*', r'9pt~\cite{fitzgibbon2001division,kocur2026minimal}'),
              'F_7pt_s3': ('cSeven', 'star', r'7pt + sampling~\cite{kocur2026minimal}'),
@@ -87,7 +87,8 @@ def main():
                            rf'coordinates {{{coords(v)}}};')
     out.append(r'\end{axis}')
 
-    # the legend, above the plot: the networks in one row, the pipelines and solvers below them
+    # the legend, above the plot: the networks trained on our data in the first row, the released ones
+    # in the second, the solvers below them
     def sample(style):
         return rf'\tikz[baseline=-0.6ex]\draw[{style}, mark indices={{2}}] plot coordinates {{(0,0) (0.2,0) (0.4,0)}};'
 
@@ -99,7 +100,7 @@ def main():
     lines = [sample(f'black!75, {st}, line width={WIDTH[st]}pt') + r'\,' + label for st, label in pipes]
     solvers = [sample(f'{BASELINES[k][0]}, line width=0.8pt, mark={BASELINES[k][1]}, mark size=0.8pt') + r'\,' + BASELINES[k][2]
                for k in SOLVER_ORDER if k in baselines]
-    rows = [row(networks[:2]), row(networks[2:]), row(solvers)]
+    rows = [row(networks[:3]), row(networks[3:]), row(solvers)]
     out += [r'\node[anchor=south, inner sep=0pt, yshift=3pt] at (ax.outer north) {\footnotesize\begin{tabular}{@{}c@{}}']
     out += [' ' + r + r' \\' for r in rows[:-1]] + [' ' + rows[-1]]
     out += [r'\end{tabular}};']
