@@ -10,13 +10,14 @@ import argparse
 import collections
 import csv
 
-COLORS = {'cOursL': '1f77b4', 'cOursC': 'ff7f0e', 'cAny': 'e377c2', 'cGeo': '7f7f7f', 'cUni': 'bcbd22',
+COLORS = {'cOursL': '1f77b4', 'cOursC': 'ff7f0e', 'cAny': 'e377c2', 'cAnyO': '17becf', 'cGeo': '7f7f7f', 'cUni': 'bcbd22',
           'cSix': '2ca02c', 'cSeven': 'd62728', 'cNine': '9467bd', 'cTen': '8c564b'}
 # drawn in this order, the last on top
 NETWORKS = [('unik3d', 'cUni', r'UniK3D~\cite{piccinelli2025unik3d}', 'triangle*'), ('geocalib', 'cGeo', r'GeoCalib~\cite{veicht2024geocalib}', 'pentagon*'),
             ('anycalib_dist', 'cAny', r'AnyCalib$_\text{dist}$~\cite{tirado2025anycalib}', 'diamond*'),
+            ('anycalib_ours', 'cAnyO', r'AnyCalib$_\text{ours}$', 'diamond'),
             ('ours_ray_vitb', 'cOursC', 'Ours ViT-B', 'square*'), ('ours_ray_vitl', 'cOursL', 'Ours ViT-L', '*')]
-LEGEND_NETWORKS = ['ours_ray_vitl', 'ours_ray_vitb', 'anycalib_dist', 'geocalib', 'unik3d']
+LEGEND_NETWORKS = ['ours_ray_vitl', 'ours_ray_vitb', 'anycalib_dist', 'anycalib_ours', 'geocalib', 'unik3d']
 BASELINES = {'k2Fk1_10pt': ('cTen', '*', r'10pt~\cite{kukelova2015efficient}'),
              'kFk_9pt': ('cNine', '*', r'9pt~\cite{fitzgibbon2001division,kocur2026minimal}'),
              'F_7pt_s3': ('cSeven', 'star', r'7pt + sampling~\cite{kocur2026minimal}'),
