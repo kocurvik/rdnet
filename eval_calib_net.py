@@ -40,7 +40,7 @@ from tqdm import tqdm
 from utils.data import get_pairs
 from utils.geometry import rotation_angle, angle, normalize, get_camera_dicts
 
-METHODS = ['geocalib', 'unik3d', 'anycalib_dist', 'ours_ray_vitl', 'ours_log_vitl', 'ours_ray_cnxt', 'ours_log_cnxt', 'ours_ray_vitb']
+METHODS = ['geocalib', 'unik3d', 'anycalib_dist', 'anycalib_ours', 'ours_ray_vitl', 'ours_log_vitl', 'ours_ray_cnxt', 'ours_log_cnxt', 'ours_ray_vitb']
 ITERATIONS = [10, 20, 50, 100, 200, 500, 1000]
 GRAVITY_METHODS = []  # E_3pt curves: dropped (user), the code stays
 
