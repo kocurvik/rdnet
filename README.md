@@ -1,6 +1,6 @@
 # Evaluation of radial distortion solvers
 
-This repo contains code for paper ["Are Minimal Radial Distortion Solvers Necessary for Relative Pose Estimation?"](https://link.springer.com/article/10.1007/s11263-025-02657-3) published in IJCV. This work is an extension of our previous work at ECCVW with the same title (arxiv: http://arxiv.org/abs/2410.05984)
+This repo contains code for paper ["Are Minimal Radial Distortion Solvers Really Necessary for Relative Pose Estimation?"](https://link.springer.com/article/10.1007/s11263-025-02657-3) published in IJCV. This work is an extension of our previous work at ECCVW with a similar title (arxiv: http://arxiv.org/abs/2410.05984)
 
 ## Installation
 
